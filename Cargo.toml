@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 bevy = "0.10.0"
 thrift = "0.17.0"
+
+[[bin]]
+name="hub"
+path="./src/hub_main.rs"
