@@ -1,15 +1,9 @@
 [package]
-name = "bevy_server"
+name = "proto"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = "0.10.0"
 thrift = "0.17.0"
-proto = { path = "crates/proto", version = "0.1.0" }
-
-[[bin]]
-name="hub"
-path="./src/hub_main.rs"

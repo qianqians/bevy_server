@@ -1,3 +1,6 @@
 cd ./thrift/windows
-thrift -out ../../src/proto --gen rs ../../proto/hub.thrift
+thrift -out ../../crates/proto/src --gen rs ../../proto/common.thrift
+thrift -out ../../crates/proto/src --gen rs ../../proto/gate.thrift
+thrift -out ../../crates/proto/src --gen rs ../../proto/hub.thrift
 cd ../../
+pause
