@@ -27,35 +27,32 @@ use thrift::protocol::verify_required_field_exists;
 use thrift::server::TProcessor;
 
 //
-// CliMsg
+// Msg
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct CliMsg {
-  pub entity_id: Option<i64>,
-  pub connection_id: Option<String>,
+pub struct Msg {
+  pub entity_id: Option<String>,
   pub method: Option<String>,
   pub argvs: Option<Vec<u8>>,
 }
 
-impl CliMsg {
-  pub fn new<F1, F2, F3, F4>(entity_id: F1, connection_id: F2, method: F3, argvs: F4) -> CliMsg where F1: Into<Option<i64>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>> {
-    CliMsg {
+impl Msg {
+  pub fn new<F1, F2, F3>(entity_id: F1, method: F2, argvs: F3) -> Msg where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>> {
+    Msg {
       entity_id: entity_id.into(),
-      connection_id: connection_id.into(),
       method: method.into(),
       argvs: argvs.into(),
     }
   }
 }
 
-impl TSerializable for CliMsg {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CliMsg> {
+impl TSerializable for Msg {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<Msg> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<i64> = Some(0);
+    let mut f_1: Option<String> = Some("".to_owned());
     let mut f_2: Option<String> = Some("".to_owned());
-    let mut f_3: Option<String> = Some("".to_owned());
-    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_3: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -64,7 +61,7 @@ impl TSerializable for CliMsg {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = i_prot.read_i64()?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
         },
         2 => {
@@ -72,12 +69,8 @@ impl TSerializable for CliMsg {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
           let val = i_prot.read_bytes()?;
-          f_4 = Some(val);
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -86,34 +79,28 @@ impl TSerializable for CliMsg {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = CliMsg {
+    let ret = Msg {
       entity_id: f_1,
-      connection_id: f_2,
-      method: f_3,
-      argvs: f_4,
+      method: f_2,
+      argvs: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("cli_msg");
+    let struct_ident = TStructIdentifier::new("msg");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::I64, 1))?;
-      o_prot.write_i64(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(ref fld_var) = self.connection_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("connection_id", TType::String, 2))?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.method {
-      o_prot.write_field_begin(&TFieldIdentifier::new("method", TType::String, 3))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("method", TType::String, 2))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.argvs {
-      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 4))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 3))?;
       o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
     }

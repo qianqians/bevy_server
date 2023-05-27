@@ -303,8 +303,8 @@ impl GateRegHubResult {
 //
 
 pub trait TGateTransferControlSyncClient {
-  fn ntf_transfer_begin(&mut self, entity_id: String) -> thrift::Result<()>;
-  fn ntf_transfer_complete(&mut self, entity_id: String) -> thrift::Result<()>;
+  fn ntf_transfer_start(&mut self, entity_id: String) -> thrift::Result<()>;
+  fn ntf_transfer_complete(&mut self, entity_id: String, conn_id: String) -> thrift::Result<()>;
 }
 
 pub trait TGateTransferControlSyncClientMarker {}
@@ -331,12 +331,12 @@ impl <IP, OP> TThriftClient for GateTransferControlSyncClient<IP, OP> where IP: 
 impl <IP, OP> TGateTransferControlSyncClientMarker for GateTransferControlSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
 
 impl <C: TThriftClient + TGateTransferControlSyncClientMarker> TGateTransferControlSyncClient for C {
-  fn ntf_transfer_begin(&mut self, entity_id: String) -> thrift::Result<()> {
+  fn ntf_transfer_start(&mut self, entity_id: String) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ntf_transfer_begin", TMessageType::Call, self.sequence_number());
-        let call_args = GateTransferControlNtfTransferBeginArgs { entity_id };
+        let message_ident = TMessageIdentifier::new("ntf_transfer_start", TMessageType::Call, self.sequence_number());
+        let call_args = GateTransferControlNtfTransferStartArgs { entity_id };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
@@ -346,24 +346,24 @@ impl <C: TThriftClient + TGateTransferControlSyncClientMarker> TGateTransferCont
     {
       let message_ident = self.i_prot_mut().read_message_begin()?;
       verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("ntf_transfer_begin", &message_ident.name)?;
+      verify_expected_service_call("ntf_transfer_start", &message_ident.name)?;
       if message_ident.message_type == TMessageType::Exception {
         let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
         self.i_prot_mut().read_message_end()?;
         return Err(thrift::Error::Application(remote_error))
       }
       verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = GateTransferControlNtfTransferBeginResult::read_from_in_protocol(self.i_prot_mut())?;
+      let result = GateTransferControlNtfTransferStartResult::read_from_in_protocol(self.i_prot_mut())?;
       self.i_prot_mut().read_message_end()?;
       result.ok_or()
     }
   }
-  fn ntf_transfer_complete(&mut self, entity_id: String) -> thrift::Result<()> {
+  fn ntf_transfer_complete(&mut self, entity_id: String, conn_id: String) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
         let message_ident = TMessageIdentifier::new("ntf_transfer_complete", TMessageType::Call, self.sequence_number());
-        let call_args = GateTransferControlNtfTransferCompleteArgs { entity_id };
+        let call_args = GateTransferControlNtfTransferCompleteArgs { entity_id, conn_id };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
@@ -392,8 +392,8 @@ impl <C: TThriftClient + TGateTransferControlSyncClientMarker> TGateTransferCont
 //
 
 pub trait GateTransferControlSyncHandler {
-  fn handle_ntf_transfer_begin(&self, entity_id: String) -> thrift::Result<()>;
-  fn handle_ntf_transfer_complete(&self, entity_id: String) -> thrift::Result<()>;
+  fn handle_ntf_transfer_start(&self, entity_id: String) -> thrift::Result<()>;
+  fn handle_ntf_transfer_complete(&self, entity_id: String, conn_id: String) -> thrift::Result<()>;
 }
 
 pub struct GateTransferControlSyncProcessor<H: GateTransferControlSyncHandler> {
@@ -406,8 +406,8 @@ impl <H: GateTransferControlSyncHandler> GateTransferControlSyncProcessor<H> {
       handler,
     }
   }
-  fn process_ntf_transfer_begin(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TGateTransferControlProcessFunctions::process_ntf_transfer_begin(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  fn process_ntf_transfer_start(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateTransferControlProcessFunctions::process_ntf_transfer_start(&self.handler, incoming_sequence_number, i_prot, o_prot)
   }
   fn process_ntf_transfer_complete(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     TGateTransferControlProcessFunctions::process_ntf_transfer_complete(&self.handler, incoming_sequence_number, i_prot, o_prot)
@@ -417,13 +417,13 @@ impl <H: GateTransferControlSyncHandler> GateTransferControlSyncProcessor<H> {
 pub struct TGateTransferControlProcessFunctions;
 
 impl TGateTransferControlProcessFunctions {
-  pub fn process_ntf_transfer_begin<H: GateTransferControlSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = GateTransferControlNtfTransferBeginArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ntf_transfer_begin(args.entity_id) {
+  pub fn process_ntf_transfer_start<H: GateTransferControlSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateTransferControlNtfTransferStartArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_ntf_transfer_start(args.entity_id) {
       Ok(_) => {
-        let message_ident = TMessageIdentifier::new("ntf_transfer_begin", TMessageType::Reply, incoming_sequence_number);
+        let message_ident = TMessageIdentifier::new("ntf_transfer_start", TMessageType::Reply, incoming_sequence_number);
         o_prot.write_message_begin(&message_ident)?;
-        let ret = GateTransferControlNtfTransferBeginResult {  };
+        let ret = GateTransferControlNtfTransferStartResult {  };
         ret.write_to_out_protocol(o_prot)?;
         o_prot.write_message_end()?;
         o_prot.flush()
@@ -431,7 +431,7 @@ impl TGateTransferControlProcessFunctions {
       Err(e) => {
         match e {
           thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("ntf_transfer_begin", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("ntf_transfer_start", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -444,7 +444,7 @@ impl TGateTransferControlProcessFunctions {
                 e.to_string()
               )
             };
-            let message_ident = TMessageIdentifier::new("ntf_transfer_begin", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("ntf_transfer_start", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -456,7 +456,7 @@ impl TGateTransferControlProcessFunctions {
   }
   pub fn process_ntf_transfer_complete<H: GateTransferControlSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let args = GateTransferControlNtfTransferCompleteArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ntf_transfer_complete(args.entity_id) {
+    match handler.handle_ntf_transfer_complete(args.entity_id, args.conn_id) {
       Ok(_) => {
         let message_ident = TMessageIdentifier::new("ntf_transfer_complete", TMessageType::Reply, incoming_sequence_number);
         o_prot.write_message_begin(&message_ident)?;
@@ -497,8 +497,8 @@ impl <H: GateTransferControlSyncHandler> TProcessor for GateTransferControlSyncP
   fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let message_ident = i_prot.read_message_begin()?;
     let res = match &*message_ident.name {
-      "ntf_transfer_begin" => {
-        self.process_ntf_transfer_begin(message_ident.sequence_number, i_prot, o_prot)
+      "ntf_transfer_start" => {
+        self.process_ntf_transfer_start(message_ident.sequence_number, i_prot, o_prot)
       },
       "ntf_transfer_complete" => {
         self.process_ntf_transfer_complete(message_ident.sequence_number, i_prot, o_prot)
@@ -519,16 +519,16 @@ impl <H: GateTransferControlSyncHandler> TProcessor for GateTransferControlSyncP
 }
 
 //
-// GateTransferControlNtfTransferBeginArgs
+// GateTransferControlNtfTransferStartArgs
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateTransferControlNtfTransferBeginArgs {
+struct GateTransferControlNtfTransferStartArgs {
   entity_id: String,
 }
 
-impl GateTransferControlNtfTransferBeginArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateTransferControlNtfTransferBeginArgs> {
+impl GateTransferControlNtfTransferStartArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateTransferControlNtfTransferStartArgs> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     loop {
@@ -549,14 +549,14 @@ impl GateTransferControlNtfTransferBeginArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("GateTransferControlNtfTransferBeginArgs.entity_id", &f_1)?;
-    let ret = GateTransferControlNtfTransferBeginArgs {
+    verify_required_field_exists("GateTransferControlNtfTransferStartArgs.entity_id", &f_1)?;
+    let ret = GateTransferControlNtfTransferStartArgs {
       entity_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_transfer_begin_args");
+    let struct_ident = TStructIdentifier::new("ntf_transfer_start_args");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
     o_prot.write_string(&self.entity_id)?;
@@ -567,18 +567,18 @@ impl GateTransferControlNtfTransferBeginArgs {
 }
 
 //
-// GateTransferControlNtfTransferBeginResult
+// GateTransferControlNtfTransferStartResult
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateTransferControlNtfTransferBeginResult {
+struct GateTransferControlNtfTransferStartResult {
 }
 
-impl GateTransferControlNtfTransferBeginResult {
+impl GateTransferControlNtfTransferStartResult {
   fn ok_or(self) -> thrift::Result<()> {
     Ok(())
   }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateTransferControlNtfTransferBeginResult> {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateTransferControlNtfTransferStartResult> {
     i_prot.read_struct_begin()?;
     loop {
       let field_ident = i_prot.read_field_begin()?;
@@ -589,11 +589,11 @@ impl GateTransferControlNtfTransferBeginResult {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = GateTransferControlNtfTransferBeginResult {};
+    let ret = GateTransferControlNtfTransferStartResult {};
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("GateTransferControlNtfTransferBeginResult");
+    let struct_ident = TStructIdentifier::new("GateTransferControlNtfTransferStartResult");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
@@ -607,12 +607,14 @@ impl GateTransferControlNtfTransferBeginResult {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct GateTransferControlNtfTransferCompleteArgs {
   entity_id: String,
+  conn_id: String,
 }
 
 impl GateTransferControlNtfTransferCompleteArgs {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateTransferControlNtfTransferCompleteArgs> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
+    let mut f_2: Option<String> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -624,6 +626,10 @@ impl GateTransferControlNtfTransferCompleteArgs {
           let val = i_prot.read_string()?;
           f_1 = Some(val);
         },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
         _ => {
           i_prot.skip(field_ident.field_type)?;
         },
@@ -632,8 +638,10 @@ impl GateTransferControlNtfTransferCompleteArgs {
     }
     i_prot.read_struct_end()?;
     verify_required_field_exists("GateTransferControlNtfTransferCompleteArgs.entity_id", &f_1)?;
+    verify_required_field_exists("GateTransferControlNtfTransferCompleteArgs.conn_id", &f_2)?;
     let ret = GateTransferControlNtfTransferCompleteArgs {
       entity_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
+      conn_id: f_2.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -642,6 +650,9 @@ impl GateTransferControlNtfTransferCompleteArgs {
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
     o_prot.write_string(&self.entity_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 2))?;
+    o_prot.write_string(&self.conn_id)?;
     o_prot.write_field_end()?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()

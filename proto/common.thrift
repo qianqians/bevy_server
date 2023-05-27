@@ -1,6 +1,6 @@
-struct cli_msg {
-	1:i64 entity_id,
-	2:string connection_id,
-	3:string method,
-	4:binary argvs
+
+struct msg {
+	1:string entity_id,
+	2:string method,
+	3:binary argvs
 }
