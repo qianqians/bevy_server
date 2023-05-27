@@ -109,3 +109,87 @@ impl TSerializable for Msg {
   }
 }
 
+//
+// Error
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct Error {
+  pub err_code: Option<i32>,
+  pub err_msg: Option<String>,
+}
+
+impl Error {
+  pub fn new<F1, F2>(err_code: F1, err_msg: F2) -> Error where F1: Into<Option<i32>>, F2: Into<Option<String>> {
+    Error {
+      err_code: err_code.into(),
+      err_msg: err_msg.into(),
+    }
+  }
+}
+
+impl TSerializable for Error {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<Error> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<i32> = Some(0);
+    let mut f_2: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_i32()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = Error {
+      err_code: f_1,
+      err_msg: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("error");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(fld_var) = self.err_code {
+      o_prot.write_field_begin(&TFieldIdentifier::new("err_code", TType::I32, 1))?;
+      o_prot.write_i32(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.err_msg {
+      o_prot.write_field_begin(&TFieldIdentifier::new("err_msg", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+impl Error for Error {}
+
+impl From<Error> for thrift::Error {
+  fn from(e: Error) -> Self {
+    thrift::Error::User(Box::new(e))
+  }
+}
+
+impl Display for Error {
+  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    write!(f, "remote service threw error")
+  }
+}
+

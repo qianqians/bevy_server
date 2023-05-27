@@ -4,3 +4,8 @@ struct msg {
 	2:string method,
 	3:binary argvs
 }
+
+exception error {
+	1:i32 err_code;
+	2:string err_msg;
+}
