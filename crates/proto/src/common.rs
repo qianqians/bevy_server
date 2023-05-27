@@ -35,14 +35,18 @@ pub struct Msg {
   pub entity_id: Option<String>,
   pub method: Option<String>,
   pub argvs: Option<Vec<u8>>,
+  pub msg_cb_id: Option<i64>,
+  pub is_in_order: Option<bool>,
 }
 
 impl Msg {
-  pub fn new<F1, F2, F3>(entity_id: F1, method: F2, argvs: F3) -> Msg where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>> {
+  pub fn new<F1, F2, F3, F4, F5>(entity_id: F1, method: F2, argvs: F3, msg_cb_id: F4, is_in_order: F5) -> Msg where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>>, F4: Into<Option<i64>>, F5: Into<Option<bool>> {
     Msg {
       entity_id: entity_id.into(),
       method: method.into(),
       argvs: argvs.into(),
+      msg_cb_id: msg_cb_id.into(),
+      is_in_order: is_in_order.into(),
     }
   }
 }
@@ -53,6 +57,8 @@ impl TSerializable for Msg {
     let mut f_1: Option<String> = Some("".to_owned());
     let mut f_2: Option<String> = Some("".to_owned());
     let mut f_3: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_4: Option<i64> = Some(0);
+    let mut f_5: Option<bool> = Some(false);
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -72,6 +78,14 @@ impl TSerializable for Msg {
           let val = i_prot.read_bytes()?;
           f_3 = Some(val);
         },
+        4 => {
+          let val = i_prot.read_i64()?;
+          f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_bool()?;
+          f_5 = Some(val);
+        },
         _ => {
           i_prot.skip(field_ident.field_type)?;
         },
@@ -83,6 +97,8 @@ impl TSerializable for Msg {
       entity_id: f_1,
       method: f_2,
       argvs: f_3,
+      msg_cb_id: f_4,
+      is_in_order: f_5,
     };
     Ok(ret)
   }
@@ -104,35 +120,48 @@ impl TSerializable for Msg {
       o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
     }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 4))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.is_in_order {
+      o_prot.write_field_begin(&TFieldIdentifier::new("is_in_order", TType::Bool, 5))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
 }
 
 //
-// Error
+// RpcRsp
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Error {
-  pub err_code: Option<i32>,
-  pub err_msg: Option<String>,
+pub struct RpcRsp {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
+  pub argvs: Option<Vec<u8>>,
 }
 
-impl Error {
-  pub fn new<F1, F2>(err_code: F1, err_msg: F2) -> Error where F1: Into<Option<i32>>, F2: Into<Option<String>> {
-    Error {
-      err_code: err_code.into(),
-      err_msg: err_msg.into(),
+impl RpcRsp {
+  pub fn new<F1, F2, F3>(entity_id: F1, msg_cb_id: F2, argvs: F3) -> RpcRsp where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<Vec<u8>>> {
+    RpcRsp {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
+      argvs: argvs.into(),
     }
   }
 }
 
-impl TSerializable for Error {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<Error> {
+impl TSerializable for RpcRsp {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<RpcRsp> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<i32> = Some(0);
-    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -141,12 +170,16 @@ impl TSerializable for Error {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = i_prot.read_i32()?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
         },
         2 => {
-          let val = i_prot.read_string()?;
+          let val = i_prot.read_i64()?;
           f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_bytes()?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -155,22 +188,124 @@ impl TSerializable for Error {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = Error {
-      err_code: f_1,
-      err_msg: f_2,
+    let ret = RpcRsp {
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      argvs: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("error");
+    let struct_ident = TStructIdentifier::new("rpc_rsp");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.argvs {
+      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 3))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// RpcErr
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct RpcErr {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
+  pub err_code: Option<i32>,
+  pub err_msg: Option<String>,
+}
+
+impl RpcErr {
+  pub fn new<F1, F2, F3, F4>(entity_id: F1, msg_cb_id: F2, err_code: F3, err_msg: F4) -> RpcErr where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<i32>>, F4: Into<Option<String>> {
+    RpcErr {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
+      err_code: err_code.into(),
+      err_msg: err_msg.into(),
+    }
+  }
+}
+
+impl TSerializable for RpcErr {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<RpcErr> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<i32> = Some(0);
+    let mut f_4: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_i32()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_string()?;
+          f_4 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = RpcErr {
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      err_code: f_3,
+      err_msg: f_4,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("rpc_err");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(fld_var) = self.err_code {
-      o_prot.write_field_begin(&TFieldIdentifier::new("err_code", TType::I32, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("err_code", TType::I32, 3))?;
       o_prot.write_i32(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.err_msg {
-      o_prot.write_field_begin(&TFieldIdentifier::new("err_msg", TType::String, 2))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("err_msg", TType::String, 4))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
@@ -179,17 +314,17 @@ impl TSerializable for Error {
   }
 }
 
-impl Error for Error {}
+impl Error for RpcErr {}
 
-impl From<Error> for thrift::Error {
-  fn from(e: Error) -> Self {
+impl From<RpcErr> for thrift::Error {
+  fn from(e: RpcErr) -> Self {
     thrift::Error::User(Box::new(e))
   }
 }
 
-impl Display for Error {
+impl Display for RpcErr {
   fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "remote service threw error")
+    write!(f, "remote service threw rpc_err")
   }
 }
 

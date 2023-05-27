@@ -699,8 +699,9 @@ impl GateTransferControlNtfTransferCompleteResult {
 
 pub trait TGateHubCallClientSyncClient {
   fn create_remote_entity(&mut self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
-  fn rpc_notify(&mut self, message: common::Msg) -> thrift::Result<()>;
-  fn rpc_request(&mut self, message: common::Msg) -> thrift::Result<common::Msg>;
+  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()>;
+  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()>;
+  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()>;
 }
 
 pub trait TGateHubCallClientSyncClientMarker {}
@@ -754,12 +755,12 @@ impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientS
       result.ok_or()
     }
   }
-  fn rpc_notify(&mut self, message: common::Msg) -> thrift::Result<()> {
+  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("rpc_notify", TMessageType::Call, self.sequence_number());
-        let call_args = GateHubCallClientRpcNotifyArgs { message };
+        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Call, self.sequence_number());
+        let call_args = GateHubCallClientCallRpcArgs { message };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
@@ -769,24 +770,24 @@ impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientS
     {
       let message_ident = self.i_prot_mut().read_message_begin()?;
       verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("rpc_notify", &message_ident.name)?;
+      verify_expected_service_call("call_rpc", &message_ident.name)?;
       if message_ident.message_type == TMessageType::Exception {
         let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
         self.i_prot_mut().read_message_end()?;
         return Err(thrift::Error::Application(remote_error))
       }
       verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = GateHubCallClientRpcNotifyResult::read_from_in_protocol(self.i_prot_mut())?;
+      let result = GateHubCallClientCallRpcResult::read_from_in_protocol(self.i_prot_mut())?;
       self.i_prot_mut().read_message_end()?;
       result.ok_or()
     }
   }
-  fn rpc_request(&mut self, message: common::Msg) -> thrift::Result<common::Msg> {
+  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Call, self.sequence_number());
-        let call_args = GateHubCallClientRpcRequestArgs { message };
+        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Call, self.sequence_number());
+        let call_args = GateHubCallClientCallRspArgs { rsp };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
@@ -796,14 +797,41 @@ impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientS
     {
       let message_ident = self.i_prot_mut().read_message_begin()?;
       verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("rpc_request", &message_ident.name)?;
+      verify_expected_service_call("call_rsp", &message_ident.name)?;
       if message_ident.message_type == TMessageType::Exception {
         let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
         self.i_prot_mut().read_message_end()?;
         return Err(thrift::Error::Application(remote_error))
       }
       verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = GateHubCallClientRpcRequestResult::read_from_in_protocol(self.i_prot_mut())?;
+      let result = GateHubCallClientCallRspResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Call, self.sequence_number());
+        let call_args = GateHubCallClientCallErrArgs { err };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("call_err", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = GateHubCallClientCallErrResult::read_from_in_protocol(self.i_prot_mut())?;
       self.i_prot_mut().read_message_end()?;
       result.ok_or()
     }
@@ -816,8 +844,9 @@ impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientS
 
 pub trait GateHubCallClientSyncHandler {
   fn handle_create_remote_entity(&self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
-  fn handle_rpc_notify(&self, message: common::Msg) -> thrift::Result<()>;
-  fn handle_rpc_request(&self, message: common::Msg) -> thrift::Result<common::Msg>;
+  fn handle_call_rpc(&self, message: common::Msg) -> thrift::Result<()>;
+  fn handle_call_rsp(&self, rsp: common::RpcRsp) -> thrift::Result<()>;
+  fn handle_call_err(&self, err: common::RpcErr) -> thrift::Result<()>;
 }
 
 pub struct GateHubCallClientSyncProcessor<H: GateHubCallClientSyncHandler> {
@@ -833,11 +862,14 @@ impl <H: GateHubCallClientSyncHandler> GateHubCallClientSyncProcessor<H> {
   fn process_create_remote_entity(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     TGateHubCallClientProcessFunctions::process_create_remote_entity(&self.handler, incoming_sequence_number, i_prot, o_prot)
   }
-  fn process_rpc_notify(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TGateHubCallClientProcessFunctions::process_rpc_notify(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  fn process_call_rpc(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateHubCallClientProcessFunctions::process_call_rpc(&self.handler, incoming_sequence_number, i_prot, o_prot)
   }
-  fn process_rpc_request(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TGateHubCallClientProcessFunctions::process_rpc_request(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  fn process_call_rsp(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateHubCallClientProcessFunctions::process_call_rsp(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+  fn process_call_err(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateHubCallClientProcessFunctions::process_call_err(&self.handler, incoming_sequence_number, i_prot, o_prot)
   }
 }
 
@@ -881,13 +913,13 @@ impl TGateHubCallClientProcessFunctions {
       },
     }
   }
-  pub fn process_rpc_notify<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = GateHubCallClientRpcNotifyArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_rpc_notify(args.message) {
+  pub fn process_call_rpc<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateHubCallClientCallRpcArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_rpc(args.message) {
       Ok(_) => {
-        let message_ident = TMessageIdentifier::new("rpc_notify", TMessageType::Reply, incoming_sequence_number);
+        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Reply, incoming_sequence_number);
         o_prot.write_message_begin(&message_ident)?;
-        let ret = GateHubCallClientRpcNotifyResult {  };
+        let ret = GateHubCallClientCallRpcResult {  };
         ret.write_to_out_protocol(o_prot)?;
         o_prot.write_message_end()?;
         o_prot.flush()
@@ -895,7 +927,7 @@ impl TGateHubCallClientProcessFunctions {
       Err(e) => {
         match e {
           thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("rpc_notify", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -908,7 +940,7 @@ impl TGateHubCallClientProcessFunctions {
                 e.to_string()
               )
             };
-            let message_ident = TMessageIdentifier::new("rpc_notify", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -918,44 +950,21 @@ impl TGateHubCallClientProcessFunctions {
       },
     }
   }
-  pub fn process_rpc_request<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = GateHubCallClientRpcRequestArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_rpc_request(args.message) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Reply, incoming_sequence_number);
+  pub fn process_call_rsp<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateHubCallClientCallRspArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_rsp(args.rsp) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Reply, incoming_sequence_number);
         o_prot.write_message_begin(&message_ident)?;
-        let ret = GateHubCallClientRpcRequestResult { result_value: Some(handler_return), err: None };
+        let ret = GateHubCallClientCallRspResult {  };
         ret.write_to_out_protocol(o_prot)?;
         o_prot.write_message_end()?;
         o_prot.flush()
       },
       Err(e) => {
         match e {
-          thrift::Error::User(usr_err) => {
-            if usr_err.downcast_ref::<common::Error>().is_some() {
-              let err = usr_err.downcast::<common::Error>().expect("downcast already checked");
-              let ret_err = GateHubCallClientRpcRequestResult{ result_value: None, err: Some(*err) };
-              let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Reply, incoming_sequence_number);
-              o_prot.write_message_begin(&message_ident)?;
-              ret_err.write_to_out_protocol(o_prot)?;
-              o_prot.write_message_end()?;
-              o_prot.flush()
-            } else {
-              let ret_err = {
-                ApplicationError::new(
-                  ApplicationErrorKind::Unknown,
-                  usr_err.to_string()
-                )
-              };
-              let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Exception, incoming_sequence_number);
-              o_prot.write_message_begin(&message_ident)?;
-              thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-              o_prot.write_message_end()?;
-              o_prot.flush()
-            }
-          },
           thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -968,7 +977,44 @@ impl TGateHubCallClientProcessFunctions {
                 e.to_string()
               )
             };
-            let message_ident = TMessageIdentifier::new("rpc_request", TMessageType::Exception, incoming_sequence_number);
+            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+  pub fn process_call_err<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateHubCallClientCallErrArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_err(args.err) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = GateHubCallClientCallErrResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
             o_prot.write_message_begin(&message_ident)?;
             thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
             o_prot.write_message_end()?;
@@ -987,11 +1033,14 @@ impl <H: GateHubCallClientSyncHandler> TProcessor for GateHubCallClientSyncProce
       "create_remote_entity" => {
         self.process_create_remote_entity(message_ident.sequence_number, i_prot, o_prot)
       },
-      "rpc_notify" => {
-        self.process_rpc_notify(message_ident.sequence_number, i_prot, o_prot)
+      "call_rpc" => {
+        self.process_call_rpc(message_ident.sequence_number, i_prot, o_prot)
       },
-      "rpc_request" => {
-        self.process_rpc_request(message_ident.sequence_number, i_prot, o_prot)
+      "call_rsp" => {
+        self.process_call_rsp(message_ident.sequence_number, i_prot, o_prot)
+      },
+      "call_err" => {
+        self.process_call_err(message_ident.sequence_number, i_prot, o_prot)
       },
       method => {
         Err(
@@ -1102,16 +1151,16 @@ impl GateHubCallClientCreateRemoteEntityResult {
 }
 
 //
-// GateHubCallClientRpcNotifyArgs
+// GateHubCallClientCallRpcArgs
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateHubCallClientRpcNotifyArgs {
+struct GateHubCallClientCallRpcArgs {
   message: common::Msg,
 }
 
-impl GateHubCallClientRpcNotifyArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientRpcNotifyArgs> {
+impl GateHubCallClientCallRpcArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallRpcArgs> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::Msg> = None;
     loop {
@@ -1132,14 +1181,14 @@ impl GateHubCallClientRpcNotifyArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("GateHubCallClientRpcNotifyArgs.message", &f_1)?;
-    let ret = GateHubCallClientRpcNotifyArgs {
+    verify_required_field_exists("GateHubCallClientCallRpcArgs.message", &f_1)?;
+    let ret = GateHubCallClientCallRpcArgs {
       message: f_1.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("rpc_notify_args");
+    let struct_ident = TStructIdentifier::new("call_rpc_args");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
     self.message.write_to_out_protocol(o_prot)?;
@@ -1150,18 +1199,18 @@ impl GateHubCallClientRpcNotifyArgs {
 }
 
 //
-// GateHubCallClientRpcNotifyResult
+// GateHubCallClientCallRpcResult
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateHubCallClientRpcNotifyResult {
+struct GateHubCallClientCallRpcResult {
 }
 
-impl GateHubCallClientRpcNotifyResult {
+impl GateHubCallClientCallRpcResult {
   fn ok_or(self) -> thrift::Result<()> {
     Ok(())
   }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientRpcNotifyResult> {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallRpcResult> {
     i_prot.read_struct_begin()?;
     loop {
       let field_ident = i_prot.read_field_begin()?;
@@ -1172,11 +1221,11 @@ impl GateHubCallClientRpcNotifyResult {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = GateHubCallClientRpcNotifyResult {};
+    let ret = GateHubCallClientCallRpcResult {};
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("GateHubCallClientRpcNotifyResult");
+    let struct_ident = TStructIdentifier::new("GateHubCallClientCallRpcResult");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
@@ -1184,16 +1233,472 @@ impl GateHubCallClientRpcNotifyResult {
 }
 
 //
-// GateHubCallClientRpcRequestArgs
+// GateHubCallClientCallRspArgs
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateHubCallClientRpcRequestArgs {
+struct GateHubCallClientCallRspArgs {
+  rsp: common::RpcRsp,
+}
+
+impl GateHubCallClientCallRspArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallRspArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcRsp> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::RpcRsp::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("GateHubCallClientCallRspArgs.rsp", &f_1)?;
+    let ret = GateHubCallClientCallRspArgs {
+      rsp: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_rsp_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
+    self.rsp.write_to_out_protocol(o_prot)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateHubCallClientCallRspResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateHubCallClientCallRspResult {
+}
+
+impl GateHubCallClientCallRspResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallRspResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GateHubCallClientCallRspResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("GateHubCallClientCallRspResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateHubCallClientCallErrArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateHubCallClientCallErrArgs {
+  err: common::RpcErr,
+}
+
+impl GateHubCallClientCallErrArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallErrArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcErr> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::RpcErr::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("GateHubCallClientCallErrArgs.err", &f_1)?;
+    let ret = GateHubCallClientCallErrArgs {
+      err: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_err_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
+    self.err.write_to_out_protocol(o_prot)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateHubCallClientCallErrResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateHubCallClientCallErrResult {
+}
+
+impl GateHubCallClientCallErrResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCallErrResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GateHubCallClientCallErrResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("GateHubCallClientCallErrResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// gate_client_call_hub service client
+//
+
+pub trait TGateClientCallHubSyncClient {
+  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()>;
+  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()>;
+  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()>;
+}
+
+pub trait TGateClientCallHubSyncClientMarker {}
+
+pub struct GateClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  _i_prot: IP,
+  _o_prot: OP,
+  _sequence_number: i32,
+}
+
+impl <IP, OP> GateClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  pub fn new(input_protocol: IP, output_protocol: OP) -> GateClientCallHubSyncClient<IP, OP> {
+    GateClientCallHubSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
+  }
+}
+
+impl <IP, OP> TThriftClient for GateClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
+  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
+  fn sequence_number(&self) -> i32 { self._sequence_number }
+  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
+}
+
+impl <IP, OP> TGateClientCallHubSyncClientMarker for GateClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
+
+impl <C: TThriftClient + TGateClientCallHubSyncClientMarker> TGateClientCallHubSyncClient for C {
+  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Call, self.sequence_number());
+        let call_args = GateClientCallHubCallRpcArgs { message };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("call_rpc", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = GateClientCallHubCallRpcResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Call, self.sequence_number());
+        let call_args = GateClientCallHubCallRspArgs { rsp };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("call_rsp", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = GateClientCallHubCallRspResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Call, self.sequence_number());
+        let call_args = GateClientCallHubCallErrArgs { err };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("call_err", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = GateClientCallHubCallErrResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+}
+
+//
+// gate_client_call_hub service processor
+//
+
+pub trait GateClientCallHubSyncHandler {
+  fn handle_call_rpc(&self, message: common::Msg) -> thrift::Result<()>;
+  fn handle_call_rsp(&self, rsp: common::RpcRsp) -> thrift::Result<()>;
+  fn handle_call_err(&self, err: common::RpcErr) -> thrift::Result<()>;
+}
+
+pub struct GateClientCallHubSyncProcessor<H: GateClientCallHubSyncHandler> {
+  handler: H,
+}
+
+impl <H: GateClientCallHubSyncHandler> GateClientCallHubSyncProcessor<H> {
+  pub fn new(handler: H) -> GateClientCallHubSyncProcessor<H> {
+    GateClientCallHubSyncProcessor {
+      handler,
+    }
+  }
+  fn process_call_rpc(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateClientCallHubProcessFunctions::process_call_rpc(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+  fn process_call_rsp(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateClientCallHubProcessFunctions::process_call_rsp(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+  fn process_call_err(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    TGateClientCallHubProcessFunctions::process_call_err(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+}
+
+pub struct TGateClientCallHubProcessFunctions;
+
+impl TGateClientCallHubProcessFunctions {
+  pub fn process_call_rpc<H: GateClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateClientCallHubCallRpcArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_rpc(args.message) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = GateClientCallHubCallRpcResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+  pub fn process_call_rsp<H: GateClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateClientCallHubCallRspArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_rsp(args.rsp) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = GateClientCallHubCallRspResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+  pub fn process_call_err<H: GateClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = GateClientCallHubCallErrArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_call_err(args.err) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = GateClientCallHubCallErrResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+}
+
+impl <H: GateClientCallHubSyncHandler> TProcessor for GateClientCallHubSyncProcessor<H> {
+  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let message_ident = i_prot.read_message_begin()?;
+    let res = match &*message_ident.name {
+      "call_rpc" => {
+        self.process_call_rpc(message_ident.sequence_number, i_prot, o_prot)
+      },
+      "call_rsp" => {
+        self.process_call_rsp(message_ident.sequence_number, i_prot, o_prot)
+      },
+      "call_err" => {
+        self.process_call_err(message_ident.sequence_number, i_prot, o_prot)
+      },
+      method => {
+        Err(
+          thrift::Error::Application(
+            ApplicationError::new(
+              ApplicationErrorKind::UnknownMethod,
+              format!("unknown method {}", method)
+            )
+          )
+        )
+      },
+    };
+    thrift::server::handle_process_result(&message_ident, res, o_prot)
+  }
+}
+
+//
+// GateClientCallHubCallRpcArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateClientCallHubCallRpcArgs {
   message: common::Msg,
 }
 
-impl GateHubCallClientRpcRequestArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientRpcRequestArgs> {
+impl GateClientCallHubCallRpcArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallRpcArgs> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::Msg> = None;
     loop {
@@ -1214,14 +1719,14 @@ impl GateHubCallClientRpcRequestArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("GateHubCallClientRpcRequestArgs.message", &f_1)?;
-    let ret = GateHubCallClientRpcRequestArgs {
+    verify_required_field_exists("GateClientCallHubCallRpcArgs.message", &f_1)?;
+    let ret = GateClientCallHubCallRpcArgs {
       message: f_1.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("rpc_request_args");
+    let struct_ident = TStructIdentifier::new("call_rpc_args");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
     self.message.write_to_out_protocol(o_prot)?;
@@ -1232,36 +1737,52 @@ impl GateHubCallClientRpcRequestArgs {
 }
 
 //
-// GateHubCallClientRpcRequestResult
+// GateClientCallHubCallRpcResult
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct GateHubCallClientRpcRequestResult {
-  result_value: Option<common::Msg>,
-  err: Option<common::Error>,
+struct GateClientCallHubCallRpcResult {
 }
 
-impl GateHubCallClientRpcRequestResult {
-  fn ok_or(self) -> thrift::Result<common::Msg> {
-    if self.err.is_some() {
-      Err(thrift::Error::User(Box::new(self.err.unwrap())))
-    } else if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for GateHubCallClientRpcRequest"
-          )
-        )
-      )
-    }
+impl GateClientCallHubCallRpcResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
   }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientRpcRequestResult> {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallRpcResult> {
     i_prot.read_struct_begin()?;
-    let mut f_0: Option<common::Msg> = None;
-    let mut f_1: Option<common::Error> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GateClientCallHubCallRpcResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("GateClientCallHubCallRpcResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateClientCallHubCallRspArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateClientCallHubCallRspArgs {
+  rsp: common::RpcRsp,
+}
+
+impl GateClientCallHubCallRspArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallRspArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcRsp> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1269,12 +1790,8 @@ impl GateHubCallClientRpcRequestResult {
       }
       let field_id = field_id(&field_ident)?;
       match field_id {
-        0 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
-          f_0 = Some(val);
-        },
         1 => {
-          let val = common::Error::read_from_in_protocol(i_prot)?;
+          let val = common::RpcRsp::read_from_in_protocol(i_prot)?;
           f_1 = Some(val);
         },
         _ => {
@@ -1284,25 +1801,134 @@ impl GateHubCallClientRpcRequestResult {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = GateHubCallClientRpcRequestResult {
-      result_value: f_0,
-      err: f_1,
+    verify_required_field_exists("GateClientCallHubCallRspArgs.rsp", &f_1)?;
+    let ret = GateClientCallHubCallRspArgs {
+      rsp: f_1.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("GateHubCallClientRpcRequestResult");
+    let struct_ident = TStructIdentifier::new("call_rsp_args");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::Struct, 0))?;
-      fld_var.write_to_out_protocol(o_prot)?;
-      o_prot.write_field_end()?
+    o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
+    self.rsp.write_to_out_protocol(o_prot)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateClientCallHubCallRspResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateClientCallHubCallRspResult {
+}
+
+impl GateClientCallHubCallRspResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallRspResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
     }
-    if let Some(ref fld_var) = self.err {
-      o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
-      fld_var.write_to_out_protocol(o_prot)?;
-      o_prot.write_field_end()?
+    i_prot.read_struct_end()?;
+    let ret = GateClientCallHubCallRspResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("GateClientCallHubCallRspResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateClientCallHubCallErrArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateClientCallHubCallErrArgs {
+  err: common::RpcErr,
+}
+
+impl GateClientCallHubCallErrArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallErrArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcErr> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::RpcErr::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
     }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("GateClientCallHubCallErrArgs.err", &f_1)?;
+    let ret = GateClientCallHubCallErrArgs {
+      err: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_err_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
+    self.err.write_to_out_protocol(o_prot)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GateClientCallHubCallErrResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct GateClientCallHubCallErrResult {
+}
+
+impl GateClientCallHubCallErrResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateClientCallHubCallErrResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GateClientCallHubCallErrResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("GateClientCallHubCallErrResult");
+    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }

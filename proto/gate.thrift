@@ -32,13 +32,36 @@ service gate_hub_call_client {
 	void create_remote_entity(1:string entity_id, 2:binary argvs),
 
 	/*
-	 * hub send rpc msg to client, ntf model.
+	 * hub send rpc msg to client.
 	 */
-	void rpc_notify(1:common.msg message),
+	void call_rpc(1:common.msg message),
 
 	/*
-	 * hub send rpc msg to client, request model.
+	 * hub send rsp to client.
 	 */
-	common.msg rpc_request(1:common.msg message) throws (1:common.error err)
+	void call_rsp(1:common.rpc_rsp rsp),
 
+	/*
+	 * hub send err to client.
+	 */
+	void call_err(1:common.rpc_err err)
+
+}
+
+service gate_client_call_hub {
+
+	/*
+	 * client send rpc msg to hub.
+	 */
+	void call_rpc(1:common.msg message),
+
+	/*
+	 * client send rsp to hub.
+	 */
+	void call_rsp(1:common.rpc_rsp rsp),
+
+	/*
+	 * client send rsp err to hub.
+	 */
+	void call_err(1:common.rpc_err err)
 }

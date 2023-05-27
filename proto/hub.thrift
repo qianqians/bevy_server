@@ -36,3 +36,41 @@ service hub_gate_transfer_control {
 	void ntf_transfer_msg_end(1:string entity_id);
 
 }
+
+service hub_client_call_hub {
+
+	/*
+	 * client call rpc to hub.
+	 */
+	void call_rpc(1:common.msg message),
+
+	/*
+	 * client callback rsp to hub.
+	 */
+	void call_rsp(1:common.rpc_rsp rsp),
+
+	/*
+	 * client callback err to hub.
+	 */
+	void call_err(1:common.rpc_err err)
+
+}
+
+service hub_call_hub {
+
+	/*
+	 * hub call rpc to hub.
+	 */
+	void call_rpc(1:common.msg message),
+
+	/*
+	 * hub callback rsp to hub.
+	 */
+	void call_rsp(1:common.rpc_rsp rsp),
+
+	/*
+	 * hub callback err to hub.
+	 */
+	void call_err(1:common.rpc_err err)
+
+}
