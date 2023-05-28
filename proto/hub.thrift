@@ -37,6 +37,14 @@ service hub_gate_transfer_control {
 
 }
 
+service hub_dbproxy_callback {
+
+	void ack_get_object_info(1:string cbid, 2:binary object_info),
+
+	void ack_get_object_info_end(1:string callbackid)
+
+}
+
 service hub_client_call_hub {
 
 	/*

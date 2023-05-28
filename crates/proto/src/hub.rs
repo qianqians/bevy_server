@@ -1089,6 +1089,401 @@ impl HubGateTransferControlNtfTransferMsgEndResult {
 }
 
 //
+// hub_dbproxy_callback service client
+//
+
+pub trait THubDbproxyCallbackSyncClient {
+  fn ack_get_object_info(&mut self, cbid: String, object_info: Vec<u8>) -> thrift::Result<()>;
+  fn ack_get_object_info_end(&mut self, callbackid: String) -> thrift::Result<()>;
+}
+
+pub trait THubDbproxyCallbackSyncClientMarker {}
+
+pub struct HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  _i_prot: IP,
+  _o_prot: OP,
+  _sequence_number: i32,
+}
+
+impl <IP, OP> HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  pub fn new(input_protocol: IP, output_protocol: OP) -> HubDbproxyCallbackSyncClient<IP, OP> {
+    HubDbproxyCallbackSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
+  }
+}
+
+impl <IP, OP> TThriftClient for HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
+  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
+  fn sequence_number(&self) -> i32 { self._sequence_number }
+  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
+}
+
+impl <IP, OP> THubDbproxyCallbackSyncClientMarker for HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
+
+impl <C: TThriftClient + THubDbproxyCallbackSyncClientMarker> THubDbproxyCallbackSyncClient for C {
+  fn ack_get_object_info(&mut self, cbid: String, object_info: Vec<u8>) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("ack_get_object_info", TMessageType::Call, self.sequence_number());
+        let call_args = HubDbproxyCallbackAckGetObjectInfoArgs { cbid, object_info };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("ack_get_object_info", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = HubDbproxyCallbackAckGetObjectInfoResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+  fn ack_get_object_info_end(&mut self, callbackid: String) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("ack_get_object_info_end", TMessageType::Call, self.sequence_number());
+        let call_args = HubDbproxyCallbackAckGetObjectInfoEndArgs { callbackid };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("ack_get_object_info_end", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = HubDbproxyCallbackAckGetObjectInfoEndResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+}
+
+//
+// hub_dbproxy_callback service processor
+//
+
+pub trait HubDbproxyCallbackSyncHandler {
+  fn handle_ack_get_object_info(&self, cbid: String, object_info: Vec<u8>) -> thrift::Result<()>;
+  fn handle_ack_get_object_info_end(&self, callbackid: String) -> thrift::Result<()>;
+}
+
+pub struct HubDbproxyCallbackSyncProcessor<H: HubDbproxyCallbackSyncHandler> {
+  handler: H,
+}
+
+impl <H: HubDbproxyCallbackSyncHandler> HubDbproxyCallbackSyncProcessor<H> {
+  pub fn new(handler: H) -> HubDbproxyCallbackSyncProcessor<H> {
+    HubDbproxyCallbackSyncProcessor {
+      handler,
+    }
+  }
+  fn process_ack_get_object_info(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    THubDbproxyCallbackProcessFunctions::process_ack_get_object_info(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+  fn process_ack_get_object_info_end(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    THubDbproxyCallbackProcessFunctions::process_ack_get_object_info_end(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+}
+
+pub struct THubDbproxyCallbackProcessFunctions;
+
+impl THubDbproxyCallbackProcessFunctions {
+  pub fn process_ack_get_object_info<H: HubDbproxyCallbackSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = HubDbproxyCallbackAckGetObjectInfoArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_ack_get_object_info(args.cbid, args.object_info) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("ack_get_object_info", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = HubDbproxyCallbackAckGetObjectInfoResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("ack_get_object_info", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("ack_get_object_info", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+  pub fn process_ack_get_object_info_end<H: HubDbproxyCallbackSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = HubDbproxyCallbackAckGetObjectInfoEndArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_ack_get_object_info_end(args.callbackid) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("ack_get_object_info_end", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = HubDbproxyCallbackAckGetObjectInfoEndResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("ack_get_object_info_end", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("ack_get_object_info_end", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+}
+
+impl <H: HubDbproxyCallbackSyncHandler> TProcessor for HubDbproxyCallbackSyncProcessor<H> {
+  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let message_ident = i_prot.read_message_begin()?;
+    let res = match &*message_ident.name {
+      "ack_get_object_info" => {
+        self.process_ack_get_object_info(message_ident.sequence_number, i_prot, o_prot)
+      },
+      "ack_get_object_info_end" => {
+        self.process_ack_get_object_info_end(message_ident.sequence_number, i_prot, o_prot)
+      },
+      method => {
+        Err(
+          thrift::Error::Application(
+            ApplicationError::new(
+              ApplicationErrorKind::UnknownMethod,
+              format!("unknown method {}", method)
+            )
+          )
+        )
+      },
+    };
+    thrift::server::handle_process_result(&message_ident, res, o_prot)
+  }
+}
+
+//
+// HubDbproxyCallbackAckGetObjectInfoArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubDbproxyCallbackAckGetObjectInfoArgs {
+  cbid: String,
+  object_info: Vec<u8>,
+}
+
+impl HubDbproxyCallbackAckGetObjectInfoArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = None;
+    let mut f_2: Option<Vec<u8>> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bytes()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoArgs.cbid", &f_1)?;
+    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoArgs.object_info", &f_2)?;
+    let ret = HubDbproxyCallbackAckGetObjectInfoArgs {
+      cbid: f_1.expect("auto-generated code should have checked for presence of required fields"),
+      object_info: f_2.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_object_info_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("cbid", TType::String, 1))?;
+    o_prot.write_string(&self.cbid)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 2))?;
+    o_prot.write_bytes(&self.object_info)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubDbproxyCallbackAckGetObjectInfoResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubDbproxyCallbackAckGetObjectInfoResult {
+}
+
+impl HubDbproxyCallbackAckGetObjectInfoResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubDbproxyCallbackAckGetObjectInfoResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("HubDbproxyCallbackAckGetObjectInfoResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubDbproxyCallbackAckGetObjectInfoEndArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubDbproxyCallbackAckGetObjectInfoEndArgs {
+  callbackid: String,
+}
+
+impl HubDbproxyCallbackAckGetObjectInfoEndArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoEndArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoEndArgs.callbackid", &f_1)?;
+    let ret = HubDbproxyCallbackAckGetObjectInfoEndArgs {
+      callbackid: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_object_info_end_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callbackid", TType::String, 1))?;
+    o_prot.write_string(&self.callbackid)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubDbproxyCallbackAckGetObjectInfoEndResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubDbproxyCallbackAckGetObjectInfoEndResult {
+}
+
+impl HubDbproxyCallbackAckGetObjectInfoEndResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoEndResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubDbproxyCallbackAckGetObjectInfoEndResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("HubDbproxyCallbackAckGetObjectInfoEndResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // hub_client_call_hub service client
 //
 
