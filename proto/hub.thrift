@@ -5,7 +5,12 @@ service hub {
 	/*
 	 * register hub to other hub.
 	 */
-	bool reg_hub(1:string hub_name, 2:string hub_type)
+	bool reg_hub(1:string hub_name, 2:string hub_type),
+
+	/*
+	 * ntf_client_request_service.
+	 */
+	void ntf_client_request_service(1:string service_name, 2:string gate_name, 3:string conn_id)
 
 }
 
@@ -24,7 +29,7 @@ service hub_transfer_control {
 	/*
 	 * notify entity exist server, target entity conn info(gate).
 	 */
-	void ntf_conn_info(1:string entity_id, 2:string gate_name, 3:string conn_id)
+	void ntf_client_conn_info(1:string entity_id, 2:string gate_name, 3:string conn_id)
 
 }
 

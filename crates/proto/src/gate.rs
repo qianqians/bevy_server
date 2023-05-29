@@ -698,7 +698,7 @@ impl GateTransferControlNtfTransferCompleteResult {
 //
 
 pub trait TGateHubCallClientSyncClient {
-  fn create_remote_entity(&mut self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
+  fn create_remote_entity(&mut self, conn_id: String, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
   fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()>;
   fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()>;
   fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()>;
@@ -728,12 +728,12 @@ impl <IP, OP> TThriftClient for GateHubCallClientSyncClient<IP, OP> where IP: TI
 impl <IP, OP> TGateHubCallClientSyncClientMarker for GateHubCallClientSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
 
 impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientSyncClient for C {
-  fn create_remote_entity(&mut self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()> {
+  fn create_remote_entity(&mut self, conn_id: String, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
         let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Call, self.sequence_number());
-        let call_args = GateHubCallClientCreateRemoteEntityArgs { entity_id, argvs };
+        let call_args = GateHubCallClientCreateRemoteEntityArgs { conn_id, entity_id, argvs };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
@@ -843,7 +843,7 @@ impl <C: TThriftClient + TGateHubCallClientSyncClientMarker> TGateHubCallClientS
 //
 
 pub trait GateHubCallClientSyncHandler {
-  fn handle_create_remote_entity(&self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
+  fn handle_create_remote_entity(&self, conn_id: String, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
   fn handle_call_rpc(&self, message: common::Msg) -> thrift::Result<()>;
   fn handle_call_rsp(&self, rsp: common::RpcRsp) -> thrift::Result<()>;
   fn handle_call_err(&self, err: common::RpcErr) -> thrift::Result<()>;
@@ -878,7 +878,7 @@ pub struct TGateHubCallClientProcessFunctions;
 impl TGateHubCallClientProcessFunctions {
   pub fn process_create_remote_entity<H: GateHubCallClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let args = GateHubCallClientCreateRemoteEntityArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_create_remote_entity(args.entity_id, args.argvs) {
+    match handler.handle_create_remote_entity(args.conn_id, args.entity_id, args.argvs) {
       Ok(_) => {
         let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Reply, incoming_sequence_number);
         o_prot.write_message_begin(&message_ident)?;
@@ -1063,6 +1063,7 @@ impl <H: GateHubCallClientSyncHandler> TProcessor for GateHubCallClientSyncProce
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 struct GateHubCallClientCreateRemoteEntityArgs {
+  conn_id: String,
   entity_id: String,
   argvs: Vec<u8>,
 }
@@ -1071,7 +1072,8 @@ impl GateHubCallClientCreateRemoteEntityArgs {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateHubCallClientCreateRemoteEntityArgs> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
-    let mut f_2: Option<Vec<u8>> = None;
+    let mut f_2: Option<String> = None;
+    let mut f_3: Option<Vec<u8>> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1084,8 +1086,12 @@ impl GateHubCallClientCreateRemoteEntityArgs {
           f_1 = Some(val);
         },
         2 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_bytes()?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -1094,21 +1100,26 @@ impl GateHubCallClientCreateRemoteEntityArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("GateHubCallClientCreateRemoteEntityArgs.entity_id", &f_1)?;
-    verify_required_field_exists("GateHubCallClientCreateRemoteEntityArgs.argvs", &f_2)?;
+    verify_required_field_exists("GateHubCallClientCreateRemoteEntityArgs.conn_id", &f_1)?;
+    verify_required_field_exists("GateHubCallClientCreateRemoteEntityArgs.entity_id", &f_2)?;
+    verify_required_field_exists("GateHubCallClientCreateRemoteEntityArgs.argvs", &f_3)?;
     let ret = GateHubCallClientCreateRemoteEntityArgs {
-      entity_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      argvs: f_2.expect("auto-generated code should have checked for presence of required fields"),
+      conn_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
+      entity_id: f_2.expect("auto-generated code should have checked for presence of required fields"),
+      argvs: f_3.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("create_remote_entity_args");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 1))?;
+    o_prot.write_string(&self.conn_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 2))?;
     o_prot.write_string(&self.entity_id)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 2))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 3))?;
     o_prot.write_bytes(&self.argvs)?;
     o_prot.write_field_end()?;
     o_prot.write_field_stop()?;

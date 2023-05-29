@@ -29,7 +29,7 @@ service gate_hub_call_client {
 	 * gate forward hub msg to client.
 	 * create remote entity in client.
 	 */
-	void create_remote_entity(1:string entity_id, 2:binary argvs),
+	void create_remote_entity(1:string conn_id, 2:string entity_id, 3:binary argvs),
 
 	/*
 	 * hub send rpc msg to client.
