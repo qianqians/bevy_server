@@ -29,12 +29,94 @@ use thrift::server::TProcessor;
 use crate::common;
 
 //
+// ClientInfo
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct ClientInfo {
+  pub gate_name: Option<String>,
+  pub conn_id: Option<String>,
+  pub client_info: Option<Vec<u8>>,
+}
+
+impl ClientInfo {
+  pub fn new<F1, F2, F3>(gate_name: F1, conn_id: F2, client_info: F3) -> ClientInfo where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>> {
+    ClientInfo {
+      gate_name: gate_name.into(),
+      conn_id: conn_id.into(),
+      client_info: client_info.into(),
+    }
+  }
+}
+
+impl TSerializable for ClientInfo {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientInfo> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_bytes()?;
+          f_3 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = ClientInfo {
+      gate_name: f_1,
+      conn_id: f_2,
+      client_info: f_3,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("client_info");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.gate_name {
+      o_prot.write_field_begin(&TFieldIdentifier::new("gate_name", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.conn_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.client_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("client_info", TType::String, 3))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // hub service client
 //
 
 pub trait THubSyncClient {
   fn reg_hub(&mut self, hub_name: String, hub_type: String) -> thrift::Result<bool>;
-  fn ntf_client_request_service(&mut self, service_name: String, gate_name: String, conn_id: String) -> thrift::Result<()>;
 }
 
 pub trait THubSyncClientMarker {}
@@ -88,33 +170,6 @@ impl <C: TThriftClient + THubSyncClientMarker> THubSyncClient for C {
       result.ok_or()
     }
   }
-  fn ntf_client_request_service(&mut self, service_name: String, gate_name: String, conn_id: String) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Call, self.sequence_number());
-        let call_args = HubNtfClientRequestServiceArgs { service_name, gate_name, conn_id };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("ntf_client_request_service", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubNtfClientRequestServiceResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
 }
 
 //
@@ -123,7 +178,6 @@ impl <C: TThriftClient + THubSyncClientMarker> THubSyncClient for C {
 
 pub trait HubSyncHandler {
   fn handle_reg_hub(&self, hub_name: String, hub_type: String) -> thrift::Result<bool>;
-  fn handle_ntf_client_request_service(&self, service_name: String, gate_name: String, conn_id: String) -> thrift::Result<()>;
 }
 
 pub struct HubSyncProcessor<H: HubSyncHandler> {
@@ -138,9 +192,6 @@ impl <H: HubSyncHandler> HubSyncProcessor<H> {
   }
   fn process_reg_hub(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     THubProcessFunctions::process_reg_hub(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ntf_client_request_service(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubProcessFunctions::process_ntf_client_request_service(&self.handler, incoming_sequence_number, i_prot, o_prot)
   }
 }
 
@@ -184,43 +235,6 @@ impl THubProcessFunctions {
       },
     }
   }
-  pub fn process_ntf_client_request_service<H: HubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubNtfClientRequestServiceArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ntf_client_request_service(args.service_name, args.gate_name, args.conn_id) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubNtfClientRequestServiceResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
 }
 
 impl <H: HubSyncHandler> TProcessor for HubSyncProcessor<H> {
@@ -229,9 +243,6 @@ impl <H: HubSyncHandler> TProcessor for HubSyncProcessor<H> {
     let res = match &*message_ident.name {
       "reg_hub" => {
         self.process_reg_hub(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ntf_client_request_service" => {
-        self.process_ntf_client_request_service(message_ident.sequence_number, i_prot, o_prot)
       },
       method => {
         Err(
@@ -365,110 +376,6 @@ impl HubRegHubResult {
       o_prot.write_bool(fld_var)?;
       o_prot.write_field_end()?
     }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubNtfClientRequestServiceArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubNtfClientRequestServiceArgs {
-  service_name: String,
-  gate_name: String,
-  conn_id: String,
-}
-
-impl HubNtfClientRequestServiceArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubNtfClientRequestServiceArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubNtfClientRequestServiceArgs.service_name", &f_1)?;
-    verify_required_field_exists("HubNtfClientRequestServiceArgs.gate_name", &f_2)?;
-    verify_required_field_exists("HubNtfClientRequestServiceArgs.conn_id", &f_3)?;
-    let ret = HubNtfClientRequestServiceArgs {
-      service_name: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      gate_name: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      conn_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_client_request_service_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("service_name", TType::String, 1))?;
-    o_prot.write_string(&self.service_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("gate_name", TType::String, 2))?;
-    o_prot.write_string(&self.gate_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 3))?;
-    o_prot.write_string(&self.conn_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubNtfClientRequestServiceResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubNtfClientRequestServiceResult {
-}
-
-impl HubNtfClientRequestServiceResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubNtfClientRequestServiceResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubNtfClientRequestServiceResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubNtfClientRequestServiceResult");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -1258,6 +1165,247 @@ impl HubGateTransferControlNtfTransferMsgEndResult {
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("HubGateTransferControlNtfTransferMsgEndResult");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// hub_service service client
+//
+
+pub trait THubServiceSyncClient {
+  fn ntf_client_request_service(&mut self, service_name: String, client_info: ClientInfo) -> thrift::Result<()>;
+}
+
+pub trait THubServiceSyncClientMarker {}
+
+pub struct HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  _i_prot: IP,
+  _o_prot: OP,
+  _sequence_number: i32,
+}
+
+impl <IP, OP> HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  pub fn new(input_protocol: IP, output_protocol: OP) -> HubServiceSyncClient<IP, OP> {
+    HubServiceSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
+  }
+}
+
+impl <IP, OP> TThriftClient for HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
+  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
+  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
+  fn sequence_number(&self) -> i32 { self._sequence_number }
+  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
+}
+
+impl <IP, OP> THubServiceSyncClientMarker for HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
+
+impl <C: TThriftClient + THubServiceSyncClientMarker> THubServiceSyncClient for C {
+  fn ntf_client_request_service(&mut self, service_name: String, client_info: ClientInfo) -> thrift::Result<()> {
+    (
+      {
+        self.increment_sequence_number();
+        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Call, self.sequence_number());
+        let call_args = HubServiceNtfClientRequestServiceArgs { service_name, client_info };
+        self.o_prot_mut().write_message_begin(&message_ident)?;
+        call_args.write_to_out_protocol(self.o_prot_mut())?;
+        self.o_prot_mut().write_message_end()?;
+        self.o_prot_mut().flush()
+      }
+    )?;
+    {
+      let message_ident = self.i_prot_mut().read_message_begin()?;
+      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
+      verify_expected_service_call("ntf_client_request_service", &message_ident.name)?;
+      if message_ident.message_type == TMessageType::Exception {
+        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
+        self.i_prot_mut().read_message_end()?;
+        return Err(thrift::Error::Application(remote_error))
+      }
+      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
+      let result = HubServiceNtfClientRequestServiceResult::read_from_in_protocol(self.i_prot_mut())?;
+      self.i_prot_mut().read_message_end()?;
+      result.ok_or()
+    }
+  }
+}
+
+//
+// hub_service service processor
+//
+
+pub trait HubServiceSyncHandler {
+  fn handle_ntf_client_request_service(&self, service_name: String, client_info: ClientInfo) -> thrift::Result<()>;
+}
+
+pub struct HubServiceSyncProcessor<H: HubServiceSyncHandler> {
+  handler: H,
+}
+
+impl <H: HubServiceSyncHandler> HubServiceSyncProcessor<H> {
+  pub fn new(handler: H) -> HubServiceSyncProcessor<H> {
+    HubServiceSyncProcessor {
+      handler,
+    }
+  }
+  fn process_ntf_client_request_service(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    THubServiceProcessFunctions::process_ntf_client_request_service(&self.handler, incoming_sequence_number, i_prot, o_prot)
+  }
+}
+
+pub struct THubServiceProcessFunctions;
+
+impl THubServiceProcessFunctions {
+  pub fn process_ntf_client_request_service<H: HubServiceSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = HubServiceNtfClientRequestServiceArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_ntf_client_request_service(args.service_name, args.client_info) {
+      Ok(_) => {
+        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Reply, incoming_sequence_number);
+        o_prot.write_message_begin(&message_ident)?;
+        let ret = HubServiceNtfClientRequestServiceResult {  };
+        ret.write_to_out_protocol(o_prot)?;
+        o_prot.write_message_end()?;
+        o_prot.flush()
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
+            o_prot.write_message_begin(&message_ident)?;
+            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
+            o_prot.write_message_end()?;
+            o_prot.flush()
+          },
+        }
+      },
+    }
+  }
+}
+
+impl <H: HubServiceSyncHandler> TProcessor for HubServiceSyncProcessor<H> {
+  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let message_ident = i_prot.read_message_begin()?;
+    let res = match &*message_ident.name {
+      "ntf_client_request_service" => {
+        self.process_ntf_client_request_service(message_ident.sequence_number, i_prot, o_prot)
+      },
+      method => {
+        Err(
+          thrift::Error::Application(
+            ApplicationError::new(
+              ApplicationErrorKind::UnknownMethod,
+              format!("unknown method {}", method)
+            )
+          )
+        )
+      },
+    };
+    thrift::server::handle_process_result(&message_ident, res, o_prot)
+  }
+}
+
+//
+// HubServiceNtfClientRequestServiceArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubServiceNtfClientRequestServiceArgs {
+  service_name: String,
+  client_info: ClientInfo,
+}
+
+impl HubServiceNtfClientRequestServiceArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubServiceNtfClientRequestServiceArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = None;
+    let mut f_2: Option<ClientInfo> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = ClientInfo::read_from_in_protocol(i_prot)?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    verify_required_field_exists("HubServiceNtfClientRequestServiceArgs.service_name", &f_1)?;
+    verify_required_field_exists("HubServiceNtfClientRequestServiceArgs.client_info", &f_2)?;
+    let ret = HubServiceNtfClientRequestServiceArgs {
+      service_name: f_1.expect("auto-generated code should have checked for presence of required fields"),
+      client_info: f_2.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ntf_client_request_service_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("service_name", TType::String, 1))?;
+    o_prot.write_string(&self.service_name)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("client_info", TType::Struct, 2))?;
+    self.client_info.write_to_out_protocol(o_prot)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubServiceNtfClientRequestServiceResult
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct HubServiceNtfClientRequestServiceResult {
+}
+
+impl HubServiceNtfClientRequestServiceResult {
+  fn ok_or(self) -> thrift::Result<()> {
+    Ok(())
+  }
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubServiceNtfClientRequestServiceResult> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubServiceNtfClientRequestServiceResult {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("HubServiceNtfClientRequestServiceResult");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()

@@ -314,17 +314,3 @@ impl TSerializable for RpcErr {
   }
 }
 
-impl Error for RpcErr {}
-
-impl From<RpcErr> for thrift::Error {
-  fn from(e: RpcErr) -> Self {
-    thrift::Error::User(Box::new(e))
-  }
-}
-
-impl Display for RpcErr {
-  fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-    write!(f, "remote service threw rpc_err")
-  }
-}
-

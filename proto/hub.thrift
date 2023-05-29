@@ -7,11 +7,6 @@ service hub {
 	 */
 	bool reg_hub(1:string hub_name, 2:string hub_type),
 
-	/*
-	 * ntf_client_request_service.
-	 */
-	void ntf_client_request_service(1:string service_name, 2:string gate_name, 3:string conn_id)
-
 }
 
 service hub_transfer_control {
@@ -39,6 +34,21 @@ service hub_gate_transfer_control {
 	 * gate notify entity exist server, old msg send complete.
 	 */
 	void ntf_transfer_msg_end(1:string entity_id);
+
+}
+
+struct client_info {
+	1:string gate_name, 
+	2:string conn_id,
+	3:binary client_info,
+}
+
+service hub_service {
+
+	/*
+	 * ntf_client_request_service.
+	 */
+	void ntf_client_request_service(1:string service_name, 2:client_info client_info)
 
 }
 

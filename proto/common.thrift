@@ -13,7 +13,7 @@ struct rpc_rsp {
 	3:binary argvs
 }
 
-exception rpc_err {
+struct rpc_err {
 	1:string entity_id,
 	2:i64 msg_cb_id,
 	3:i32 err_code,
