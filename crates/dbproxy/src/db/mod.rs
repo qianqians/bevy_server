@@ -1,5 +1,7 @@
 use std::any::{Any};
 
+use mongo::MongoProxy;
+
 pub enum DBEventType {
     EvGetGuid,
     EvCreateObject,
@@ -110,6 +112,7 @@ impl DBEvGetObjectCount {
 }
 
 pub struct DBEvent {
+    pub proxy: *mut MongoProxy,
     pub ev_type: DBEventType,
     pub db: String,
     pub collection: String,
@@ -118,8 +121,9 @@ pub struct DBEvent {
 }
 
 impl DBEvent {
-    pub fn new(_ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
+    pub fn new(_proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
         DBEvent {
+            proxy: _proxy,
             ev_type: _ev_type,
             db: _db,
             collection: _collection,
