@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 thrift = "0.17.0"
 futures = "0.3.28"
+mongodb = "2.5.0"
 mongo = { path = "../mongo", version = "0.1.0" }
 proto = { path = "../proto", version = "0.1.0" }
+processor = { path = "../processor", version = "0.1.0" }

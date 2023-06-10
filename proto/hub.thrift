@@ -54,9 +54,21 @@ service hub_service {
 
 service hub_dbproxy_callback {
 
-	void ack_get_object_info(1:string cbid, 2:binary object_info),
+	oneway void ack_get_guid(1:string callback_id, 2:i64 guid),
 
-	void ack_get_object_info_end(1:string callbackid)
+	oneway void ack_create_object(1:string callback_id, 2:bool result),
+
+	oneway void ack_updata_object(1:string callback_id, 2:bool result),
+
+	oneway void ack_find_and_modify(1:string callback_id, 2:binary object_info),
+
+	oneway void ack_remove_object(1:string callback_id, 2:bool result),
+
+	oneway void ack_get_object_count(1:string callback_id, 2:i32 count),
+
+	oneway void ack_get_object_info(1:string callback_id, 2:binary object_info),
+
+	oneway void ack_get_object_info_end(1:string callback_id)
 
 }
 

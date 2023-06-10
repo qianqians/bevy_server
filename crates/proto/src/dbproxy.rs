@@ -32,13 +32,13 @@ use thrift::server::TProcessor;
 
 pub trait TDbproxySyncClient {
   fn reg_hub(&mut self, hub_name: String) -> thrift::Result<bool>;
-  fn get_guid(&mut self, db: String, collection: String) -> thrift::Result<i64>;
-  fn create_object(&mut self, db: String, collection: String, object_info: Vec<u8>) -> thrift::Result<bool>;
-  fn updata_object(&mut self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<bool>;
-  fn find_and_modify(&mut self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<Vec<u8>>;
-  fn remove_object(&mut self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<bool>;
-  fn get_object_info(&mut self, db: String, collection: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool, cbid: String) -> thrift::Result<()>;
-  fn get_object_count(&mut self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<i32>;
+  fn get_guid(&mut self, db: String, collection: String, callback_id: String) -> thrift::Result<()>;
+  fn create_object(&mut self, db: String, collection: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
+  fn updata_object(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()>;
+  fn find_and_modify(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()>;
+  fn remove_object(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
+  fn get_object_info(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()>;
+  fn get_object_count(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
 }
 
 pub trait TDbproxySyncClientMarker {}
@@ -92,194 +92,103 @@ impl <C: TThriftClient + TDbproxySyncClientMarker> TDbproxySyncClient for C {
       result.ok_or()
     }
   }
-  fn get_guid(&mut self, db: String, collection: String) -> thrift::Result<i64> {
+  fn get_guid(&mut self, db: String, collection: String, callback_id: String) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_guid", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyGetGuidArgs { db, collection };
+        let message_ident = TMessageIdentifier::new("get_guid", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyGetGuidArgs { db, collection, callback_id };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("get_guid", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyGetGuidResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn create_object(&mut self, db: String, collection: String, object_info: Vec<u8>) -> thrift::Result<bool> {
+  fn create_object(&mut self, db: String, collection: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("create_object", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyCreateObjectArgs { db, collection, object_info };
+        let message_ident = TMessageIdentifier::new("create_object", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyCreateObjectArgs { db, collection, callback_id, object_info };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("create_object", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyCreateObjectResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn updata_object(&mut self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<bool> {
+  fn updata_object(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("updata_object", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyUpdataObjectArgs { db, collection, query_info, updata_info, _upsert };
+        let message_ident = TMessageIdentifier::new("updata_object", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyUpdataObjectArgs { db, collection, callback_id, query_info, updata_info, _upsert };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("updata_object", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyUpdataObjectResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn find_and_modify(&mut self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<Vec<u8>> {
+  fn find_and_modify(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyFindAndModifyArgs { db, collection, query_info, updata_info, _new, _upsert };
+        let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyFindAndModifyArgs { db, collection, callback_id, query_info, updata_info, _new, _upsert };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("find_and_modify", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyFindAndModifyResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn remove_object(&mut self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<bool> {
+  fn remove_object(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("remove_object", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyRemoveObjectArgs { db, collection, query_info };
+        let message_ident = TMessageIdentifier::new("remove_object", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyRemoveObjectArgs { db, collection, callback_id, query_info };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("remove_object", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyRemoveObjectResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn get_object_info(&mut self, db: String, collection: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool, cbid: String) -> thrift::Result<()> {
+  fn get_object_info(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyGetObjectInfoArgs { db, collection, query_info, skip, limit, sort, ascending, cbid };
+        let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyGetObjectInfoArgs { db, collection, callback_id, query_info, skip, limit, sort, ascending };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("get_object_info", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyGetObjectInfoResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
-  fn get_object_count(&mut self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<i32> {
+  fn get_object_count(&mut self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
     (
       {
         self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyGetObjectCountArgs { db, collection, query_info };
+        let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::OneWay, self.sequence_number());
+        let call_args = DbproxyGetObjectCountArgs { db, collection, callback_id, query_info };
         self.o_prot_mut().write_message_begin(&message_ident)?;
         call_args.write_to_out_protocol(self.o_prot_mut())?;
         self.o_prot_mut().write_message_end()?;
         self.o_prot_mut().flush()
       }
     )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("get_object_count", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyGetObjectCountResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
+    Ok(())
   }
 }
 
@@ -289,13 +198,13 @@ impl <C: TThriftClient + TDbproxySyncClientMarker> TDbproxySyncClient for C {
 
 pub trait DbproxySyncHandler {
   fn handle_reg_hub(&self, hub_name: String) -> thrift::Result<bool>;
-  fn handle_get_guid(&self, db: String, collection: String) -> thrift::Result<i64>;
-  fn handle_create_object(&self, db: String, collection: String, object_info: Vec<u8>) -> thrift::Result<bool>;
-  fn handle_updata_object(&self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<bool>;
-  fn handle_find_and_modify(&self, db: String, collection: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<Vec<u8>>;
-  fn handle_remove_object(&self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<bool>;
-  fn handle_get_object_info(&self, db: String, collection: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool, cbid: String) -> thrift::Result<()>;
-  fn handle_get_object_count(&self, db: String, collection: String, query_info: Vec<u8>) -> thrift::Result<i32>;
+  fn handle_get_guid(&self, db: String, collection: String, callback_id: String) -> thrift::Result<()>;
+  fn handle_create_object(&self, db: String, collection: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
+  fn handle_updata_object(&self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()>;
+  fn handle_find_and_modify(&self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()>;
+  fn handle_remove_object(&self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
+  fn handle_get_object_info(&self, db: String, collection: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()>;
+  fn handle_get_object_count(&self, db: String, collection: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
 }
 
 pub struct DbproxySyncProcessor<H: DbproxySyncHandler> {
@@ -374,210 +283,16 @@ impl TDbproxyProcessFunctions {
       },
     }
   }
-  pub fn process_get_guid<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+  pub fn process_get_guid<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let args = DbproxyGetGuidArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_guid(args.db, args.collection) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("get_guid", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyGetGuidResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("get_guid", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("get_guid", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_create_object<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyCreateObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_create_object(args.db, args.collection, args.object_info) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("create_object", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyCreateObjectResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("create_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("create_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_updata_object<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyUpdataObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_updata_object(args.db, args.collection, args.query_info, args.updata_info, args._upsert) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("updata_object", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyUpdataObjectResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("updata_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("updata_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_find_and_modify<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyFindAndModifyArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_find_and_modify(args.db, args.collection, args.query_info, args.updata_info, args._new, args._upsert) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyFindAndModifyResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_remove_object<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyRemoveObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_remove_object(args.db, args.collection, args.query_info) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("remove_object", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyRemoveObjectResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("remove_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("remove_object", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_get_object_info<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyGetObjectInfoArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_object_info(args.db, args.collection, args.query_info, args.skip, args.limit, args.sort, args.ascending, args.cbid) {
+    match handler.handle_get_guid(args.db, args.collection, args.callback_id) {
       Ok(_) => {
-        let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyGetObjectInfoResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
+        Ok(())
       },
       Err(e) => {
         match e {
           thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
+            Err(thrift::Error::Application(app_err))
           },
           _ => {
             let ret_err = {
@@ -586,35 +301,22 @@ impl TDbproxyProcessFunctions {
                 e.to_string()
               )
             };
-            let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
+            Err(thrift::Error::Application(ret_err))
           },
         }
       },
     }
   }
-  pub fn process_get_object_count<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyGetObjectCountArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_object_count(args.db, args.collection, args.query_info) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyGetObjectCountResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
+  pub fn process_create_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyCreateObjectArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_create_object(args.db, args.collection, args.callback_id, args.object_info) {
+      Ok(_) => {
+        Ok(())
       },
       Err(e) => {
         match e {
           thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
+            Err(thrift::Error::Application(app_err))
           },
           _ => {
             let ret_err = {
@@ -623,11 +325,127 @@ impl TDbproxyProcessFunctions {
                 e.to_string()
               )
             };
-            let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
+            Err(thrift::Error::Application(ret_err))
+          },
+        }
+      },
+    }
+  }
+  pub fn process_updata_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyUpdataObjectArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_updata_object(args.db, args.collection, args.callback_id, args.query_info, args.updata_info, args._upsert) {
+      Ok(_) => {
+        Ok(())
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            Err(thrift::Error::Application(app_err))
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            Err(thrift::Error::Application(ret_err))
+          },
+        }
+      },
+    }
+  }
+  pub fn process_find_and_modify<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyFindAndModifyArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_find_and_modify(args.db, args.collection, args.callback_id, args.query_info, args.updata_info, args._new, args._upsert) {
+      Ok(_) => {
+        Ok(())
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            Err(thrift::Error::Application(app_err))
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            Err(thrift::Error::Application(ret_err))
+          },
+        }
+      },
+    }
+  }
+  pub fn process_remove_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyRemoveObjectArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_remove_object(args.db, args.collection, args.callback_id, args.query_info) {
+      Ok(_) => {
+        Ok(())
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            Err(thrift::Error::Application(app_err))
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            Err(thrift::Error::Application(ret_err))
+          },
+        }
+      },
+    }
+  }
+  pub fn process_get_object_info<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyGetObjectInfoArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_get_object_info(args.db, args.collection, args.callback_id, args.query_info, args.skip, args.limit, args.sort, args.ascending) {
+      Ok(_) => {
+        Ok(())
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            Err(thrift::Error::Application(app_err))
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            Err(thrift::Error::Application(ret_err))
+          },
+        }
+      },
+    }
+  }
+  pub fn process_get_object_count<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let args = DbproxyGetObjectCountArgs::read_from_in_protocol(i_prot)?;
+    match handler.handle_get_object_count(args.db, args.collection, args.callback_id, args.query_info) {
+      Ok(_) => {
+        Ok(())
+      },
+      Err(e) => {
+        match e {
+          thrift::Error::Application(app_err) => {
+            Err(thrift::Error::Application(app_err))
+          },
+          _ => {
+            let ret_err = {
+              ApplicationError::new(
+                ApplicationErrorKind::Unknown,
+                e.to_string()
+              )
+            };
+            Err(thrift::Error::Application(ret_err))
           },
         }
       },
@@ -797,6 +615,7 @@ impl DbproxyRegHubResult {
 struct DbproxyGetGuidArgs {
   db: String,
   collection: String,
+  callback_id: String,
 }
 
 impl DbproxyGetGuidArgs {
@@ -804,6 +623,7 @@ impl DbproxyGetGuidArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
+    let mut f_3: Option<String> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -819,6 +639,10 @@ impl DbproxyGetGuidArgs {
           let val = i_prot.read_string()?;
           f_2 = Some(val);
         },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
         _ => {
           i_prot.skip(field_ident.field_type)?;
         },
@@ -828,9 +652,11 @@ impl DbproxyGetGuidArgs {
     i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyGetGuidArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyGetGuidArgs.collection", &f_2)?;
+    verify_required_field_exists("DbproxyGetGuidArgs.callback_id", &f_3)?;
     let ret = DbproxyGetGuidArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -843,69 +669,9 @@ impl DbproxyGetGuidArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetGuidResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetGuidResult {
-  result_value: Option<i64>,
-}
-
-impl DbproxyGetGuidResult {
-  fn ok_or(self) -> thrift::Result<i64> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyGetGuid"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetGuidResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<i64> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_i64()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyGetGuidResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyGetGuidResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::I64, 0))?;
-      o_prot.write_i64(fld_var)?;
-      o_prot.write_field_end()?
-    }
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -919,6 +685,7 @@ impl DbproxyGetGuidResult {
 struct DbproxyCreateObjectArgs {
   db: String,
   collection: String,
+  callback_id: String,
   object_info: Vec<u8>,
 }
 
@@ -927,7 +694,8 @@ impl DbproxyCreateObjectArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
+    let mut f_3: Option<String> = None;
+    let mut f_4: Option<Vec<u8>> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -944,8 +712,12 @@ impl DbproxyCreateObjectArgs {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -956,11 +728,13 @@ impl DbproxyCreateObjectArgs {
     i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyCreateObjectArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyCreateObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.object_info", &f_3)?;
+    verify_required_field_exists("DbproxyCreateObjectArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyCreateObjectArgs.object_info", &f_4)?;
     let ret = DbproxyCreateObjectArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      object_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      object_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -973,72 +747,12 @@ impl DbproxyCreateObjectArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 3))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 4))?;
     o_prot.write_bytes(&self.object_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyCreateObjectResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyCreateObjectResult {
-  result_value: Option<bool>,
-}
-
-impl DbproxyCreateObjectResult {
-  fn ok_or(self) -> thrift::Result<bool> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyCreateObject"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyCreateObjectResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_bool()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyCreateObjectResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyCreateObjectResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::Bool, 0))?;
-      o_prot.write_bool(fld_var)?;
-      o_prot.write_field_end()?
-    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -1052,6 +766,7 @@ impl DbproxyCreateObjectResult {
 struct DbproxyUpdataObjectArgs {
   db: String,
   collection: String,
+  callback_id: String,
   query_info: Vec<u8>,
   updata_info: Vec<u8>,
   _upsert: bool,
@@ -1062,165 +777,9 @@ impl DbproxyUpdataObjectArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
+    let mut f_3: Option<String> = None;
     let mut f_4: Option<Vec<u8>> = None;
-    let mut f_5: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_bytes()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_bytes()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bool()?;
-          f_5 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.query_info", &f_3)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.updata_info", &f_4)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs._upsert", &f_5)?;
-    let ret = DbproxyUpdataObjectArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      updata_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      _upsert: f_5.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("updata_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 3))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 4))?;
-    o_prot.write_bytes(&self.updata_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 5))?;
-    o_prot.write_bool(self._upsert)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyUpdataObjectResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyUpdataObjectResult {
-  result_value: Option<bool>,
-}
-
-impl DbproxyUpdataObjectResult {
-  fn ok_or(self) -> thrift::Result<bool> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyUpdataObject"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyUpdataObjectResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_bool()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyUpdataObjectResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyUpdataObjectResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::Bool, 0))?;
-      o_prot.write_bool(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyFindAndModifyArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyFindAndModifyArgs {
-  db: String,
-  collection: String,
-  query_info: Vec<u8>,
-  updata_info: Vec<u8>,
-  _new: bool,
-  _upsert: bool,
-}
-
-impl DbproxyFindAndModifyArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyFindAndModifyArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
-    let mut f_4: Option<Vec<u8>> = None;
-    let mut f_5: Option<bool> = None;
+    let mut f_5: Option<Vec<u8>> = None;
     let mut f_6: Option<bool> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
@@ -1238,7 +797,7 @@ impl DbproxyFindAndModifyArgs {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
         },
         4 => {
@@ -1246,7 +805,7 @@ impl DbproxyFindAndModifyArgs {
           f_4 = Some(val);
         },
         5 => {
-          let val = i_prot.read_bool()?;
+          let val = i_prot.read_bytes()?;
           f_5 = Some(val);
         },
         6 => {
@@ -1260,19 +819,130 @@ impl DbproxyFindAndModifyArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs.db", &f_1)?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs.collection", &f_2)?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs.query_info", &f_4)?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs.updata_info", &f_5)?;
+    verify_required_field_exists("DbproxyUpdataObjectArgs._upsert", &f_6)?;
+    let ret = DbproxyUpdataObjectArgs {
+      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
+      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      query_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
+      updata_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
+      _upsert: f_6.expect("auto-generated code should have checked for presence of required fields"),
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("updata_object_args");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+    o_prot.write_string(&self.db)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+    o_prot.write_string(&self.collection)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+    o_prot.write_bytes(&self.query_info)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 5))?;
+    o_prot.write_bytes(&self.updata_info)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 6))?;
+    o_prot.write_bool(self._upsert)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// DbproxyFindAndModifyArgs
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+struct DbproxyFindAndModifyArgs {
+  db: String,
+  collection: String,
+  callback_id: String,
+  query_info: Vec<u8>,
+  updata_info: Vec<u8>,
+  _new: bool,
+  _upsert: bool,
+}
+
+impl DbproxyFindAndModifyArgs {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyFindAndModifyArgs> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = None;
+    let mut f_2: Option<String> = None;
+    let mut f_3: Option<String> = None;
+    let mut f_4: Option<Vec<u8>> = None;
+    let mut f_5: Option<Vec<u8>> = None;
+    let mut f_6: Option<bool> = None;
+    let mut f_7: Option<bool> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_bytes()?;
+          f_5 = Some(val);
+        },
+        6 => {
+          let val = i_prot.read_bool()?;
+          f_6 = Some(val);
+        },
+        7 => {
+          let val = i_prot.read_bool()?;
+          f_7 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyFindAndModifyArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyFindAndModifyArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.query_info", &f_3)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.updata_info", &f_4)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs._new", &f_5)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs._upsert", &f_6)?;
+    verify_required_field_exists("DbproxyFindAndModifyArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyFindAndModifyArgs.query_info", &f_4)?;
+    verify_required_field_exists("DbproxyFindAndModifyArgs.updata_info", &f_5)?;
+    verify_required_field_exists("DbproxyFindAndModifyArgs._new", &f_6)?;
+    verify_required_field_exists("DbproxyFindAndModifyArgs._upsert", &f_7)?;
     let ret = DbproxyFindAndModifyArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      updata_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      _new: f_5.expect("auto-generated code should have checked for presence of required fields"),
-      _upsert: f_6.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      query_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
+      updata_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
+      _new: f_6.expect("auto-generated code should have checked for presence of required fields"),
+      _upsert: f_7.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -1285,81 +955,21 @@ impl DbproxyFindAndModifyArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 3))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
     o_prot.write_bytes(&self.query_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 4))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 5))?;
     o_prot.write_bytes(&self.updata_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_new", TType::Bool, 5))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("_new", TType::Bool, 6))?;
     o_prot.write_bool(self._new)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 6))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 7))?;
     o_prot.write_bool(self._upsert)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyFindAndModifyResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyFindAndModifyResult {
-  result_value: Option<Vec<u8>>,
-}
-
-impl DbproxyFindAndModifyResult {
-  fn ok_or(self) -> thrift::Result<Vec<u8>> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyFindAndModify"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyFindAndModifyResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_bytes()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyFindAndModifyResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyFindAndModifyResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::String, 0))?;
-      o_prot.write_bytes(fld_var)?;
-      o_prot.write_field_end()?
-    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -1373,6 +983,7 @@ impl DbproxyFindAndModifyResult {
 struct DbproxyRemoveObjectArgs {
   db: String,
   collection: String,
+  callback_id: String,
   query_info: Vec<u8>,
 }
 
@@ -1381,7 +992,8 @@ impl DbproxyRemoveObjectArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
+    let mut f_3: Option<String> = None;
+    let mut f_4: Option<Vec<u8>> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1398,8 +1010,12 @@ impl DbproxyRemoveObjectArgs {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -1410,11 +1026,13 @@ impl DbproxyRemoveObjectArgs {
     i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyRemoveObjectArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyRemoveObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.query_info", &f_3)?;
+    verify_required_field_exists("DbproxyRemoveObjectArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyRemoveObjectArgs.query_info", &f_4)?;
     let ret = DbproxyRemoveObjectArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      query_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -1427,72 +1045,12 @@ impl DbproxyRemoveObjectArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 3))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
     o_prot.write_bytes(&self.query_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyRemoveObjectResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyRemoveObjectResult {
-  result_value: Option<bool>,
-}
-
-impl DbproxyRemoveObjectResult {
-  fn ok_or(self) -> thrift::Result<bool> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyRemoveObject"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyRemoveObjectResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_bool()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyRemoveObjectResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyRemoveObjectResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::Bool, 0))?;
-      o_prot.write_bool(fld_var)?;
-      o_prot.write_field_end()?
-    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -1506,12 +1064,12 @@ impl DbproxyRemoveObjectResult {
 struct DbproxyGetObjectInfoArgs {
   db: String,
   collection: String,
+  callback_id: String,
   query_info: Vec<u8>,
   skip: i32,
   limit: i32,
   sort: String,
   ascending: bool,
-  cbid: String,
 }
 
 impl DbproxyGetObjectInfoArgs {
@@ -1519,12 +1077,12 @@ impl DbproxyGetObjectInfoArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
-    let mut f_4: Option<i32> = None;
+    let mut f_3: Option<String> = None;
+    let mut f_4: Option<Vec<u8>> = None;
     let mut f_5: Option<i32> = None;
-    let mut f_6: Option<String> = None;
-    let mut f_7: Option<bool> = None;
-    let mut f_8: Option<String> = None;
+    let mut f_6: Option<i32> = None;
+    let mut f_7: Option<String> = None;
+    let mut f_8: Option<bool> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1541,11 +1099,11 @@ impl DbproxyGetObjectInfoArgs {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
         },
         4 => {
-          let val = i_prot.read_i32()?;
+          let val = i_prot.read_bytes()?;
           f_4 = Some(val);
         },
         5 => {
@@ -1553,15 +1111,15 @@ impl DbproxyGetObjectInfoArgs {
           f_5 = Some(val);
         },
         6 => {
-          let val = i_prot.read_string()?;
+          let val = i_prot.read_i32()?;
           f_6 = Some(val);
         },
         7 => {
-          let val = i_prot.read_bool()?;
+          let val = i_prot.read_string()?;
           f_7 = Some(val);
         },
         8 => {
-          let val = i_prot.read_string()?;
+          let val = i_prot.read_bool()?;
           f_8 = Some(val);
         },
         _ => {
@@ -1573,21 +1131,21 @@ impl DbproxyGetObjectInfoArgs {
     i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyGetObjectInfoArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyGetObjectInfoArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.query_info", &f_3)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.skip", &f_4)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.limit", &f_5)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.sort", &f_6)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.ascending", &f_7)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.cbid", &f_8)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.query_info", &f_4)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.skip", &f_5)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.limit", &f_6)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.sort", &f_7)?;
+    verify_required_field_exists("DbproxyGetObjectInfoArgs.ascending", &f_8)?;
     let ret = DbproxyGetObjectInfoArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      skip: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      limit: f_5.expect("auto-generated code should have checked for presence of required fields"),
-      sort: f_6.expect("auto-generated code should have checked for presence of required fields"),
-      ascending: f_7.expect("auto-generated code should have checked for presence of required fields"),
-      cbid: f_8.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      query_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
+      skip: f_5.expect("auto-generated code should have checked for presence of required fields"),
+      limit: f_6.expect("auto-generated code should have checked for presence of required fields"),
+      sort: f_7.expect("auto-generated code should have checked for presence of required fields"),
+      ascending: f_8.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -1600,58 +1158,24 @@ impl DbproxyGetObjectInfoArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 3))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
     o_prot.write_bytes(&self.query_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("skip", TType::I32, 4))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("skip", TType::I32, 5))?;
     o_prot.write_i32(self.skip)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("limit", TType::I32, 5))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("limit", TType::I32, 6))?;
     o_prot.write_i32(self.limit)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("sort", TType::String, 6))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("sort", TType::String, 7))?;
     o_prot.write_string(&self.sort)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("ascending", TType::Bool, 7))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("ascending", TType::Bool, 8))?;
     o_prot.write_bool(self.ascending)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("cbid", TType::String, 8))?;
-    o_prot.write_string(&self.cbid)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetObjectInfoResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetObjectInfoResult {
-}
-
-impl DbproxyGetObjectInfoResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetObjectInfoResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyGetObjectInfoResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyGetObjectInfoResult");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -1665,6 +1189,7 @@ impl DbproxyGetObjectInfoResult {
 struct DbproxyGetObjectCountArgs {
   db: String,
   collection: String,
+  callback_id: String,
   query_info: Vec<u8>,
 }
 
@@ -1673,7 +1198,8 @@ impl DbproxyGetObjectCountArgs {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = None;
     let mut f_2: Option<String> = None;
-    let mut f_3: Option<Vec<u8>> = None;
+    let mut f_3: Option<String> = None;
+    let mut f_4: Option<Vec<u8>> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1690,8 +1216,12 @@ impl DbproxyGetObjectCountArgs {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -1702,11 +1232,13 @@ impl DbproxyGetObjectCountArgs {
     i_prot.read_struct_end()?;
     verify_required_field_exists("DbproxyGetObjectCountArgs.db", &f_1)?;
     verify_required_field_exists("DbproxyGetObjectCountArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.query_info", &f_3)?;
+    verify_required_field_exists("DbproxyGetObjectCountArgs.callback_id", &f_3)?;
+    verify_required_field_exists("DbproxyGetObjectCountArgs.query_info", &f_4)?;
     let ret = DbproxyGetObjectCountArgs {
       db: f_1.expect("auto-generated code should have checked for presence of required fields"),
       collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      callback_id: f_3.expect("auto-generated code should have checked for presence of required fields"),
+      query_info: f_4.expect("auto-generated code should have checked for presence of required fields"),
     };
     Ok(ret)
   }
@@ -1719,72 +1251,12 @@ impl DbproxyGetObjectCountArgs {
     o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
     o_prot.write_string(&self.collection)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 3))?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+    o_prot.write_string(&self.callback_id)?;
+    o_prot.write_field_end()?;
+    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
     o_prot.write_bytes(&self.query_info)?;
     o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetObjectCountResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetObjectCountResult {
-  result_value: Option<i32>,
-}
-
-impl DbproxyGetObjectCountResult {
-  fn ok_or(self) -> thrift::Result<i32> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyGetObjectCount"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetObjectCountResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<i32> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_i32()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyGetObjectCountResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyGetObjectCountResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::I32, 0))?;
-      o_prot.write_i32(fld_var)?;
-      o_prot.write_field_end()?
-    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }

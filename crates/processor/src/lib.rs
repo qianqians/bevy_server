@@ -1,10 +1,7 @@
-#![feature(async_closure)]
-#![feature(future_join)]
-
-use std::{collections::VecDeque, future::Future, future::join};
+use std::{collections::VecDeque};
 
 pub struct Processor<T> {
-    que : VecDeque<Box<T> >
+    que : VecDeque<T>
 }
 
 impl <T> Processor<T> {
@@ -15,7 +12,7 @@ impl <T> Processor<T> {
     }
 
     pub fn enque(&mut self, t:T) {
-        self.que.push_back(Box::new(t));
+        self.que.push_back(t);
     }
 
     pub fn process(&mut self, f:fn(T)) {
@@ -23,7 +20,7 @@ impl <T> Processor<T> {
             let p = self.que.pop_back();
             match p {
                 None => break,
-                Some(t) => f(*t)
+                Some(t) => f(t)
             }
         }
     }
