@@ -1,9 +1,9 @@
-use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::ptr::null;
 use std::thread;
 use std::time::Duration;
+
+use tracing::{trace, debug, info, warn, error};
 
 use thrift::protocol::{TCompactInputProtocolFactory, TCompactOutputProtocolFactory, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
 use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory, TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TIoChannel, TTcpChannel };
@@ -56,6 +56,8 @@ impl DBProxyThriftServer {
 
 impl DbproxySyncHandler for DBProxyThriftServer {
     fn handle_reg_hub(&self, hub_name: String, host: String, port: i32) -> thrift::Result<bool> {
+        trace!("begin reg_hub!");
+
         let mut c = TTcpChannel::new();
         c.open(&format!("{}:{}", host, port))?;
         let (i_chan, o_chan) = c.split()?;
@@ -74,6 +76,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_get_guid(&self, db: String, collection: String, hub_name: String, callback_id: String) -> thrift::Result<()> {
+        trace!("begin get_guid!");
+
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -86,6 +90,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_create_object(&self, db: String, collection: String, hub_name: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()> {
+        trace!("begin create_object!");
+
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -98,6 +104,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_updata_object(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()> {
+        trace!("begin updata_object!");
+
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -110,6 +118,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_find_and_modify(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()> {
+        trace!("begin find_and_modify!");
+
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -122,6 +132,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_remove_object(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
+        trace!("begin remove_object!");
+        
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -134,6 +146,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_get_object_info(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()> {
+        trace!("begin get_object_info!");
+        
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
@@ -146,6 +160,8 @@ impl DbproxySyncHandler for DBProxyThriftServer {
     }
 
     fn handle_get_object_count(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
+        trace!("begin get_object_count!");
+        
         let p = self.cast_mut();
         let hubs = p.hubs.lock().unwrap();
         let opt_hub_proxy= hubs.get(&hub_name);
