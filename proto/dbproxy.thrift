@@ -38,6 +38,6 @@ service dbproxy {
     /*
      * count conform conform doc in mongodb
      */
-	oneway void get_object_count(1:string db, 2:string collection, 3:string hub_name, 4:string callback_id, 5:binary query_info),
+	oneway void get_object_count(1:string db, 2:string collection, 3:string hub_name, 4:string callback_id, 5:binary query_info)
 
 }
