@@ -1,6 +1,14 @@
 use std::any::{Any};
 
+use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
+use thrift::transport::{TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TTcpChannel };
+
+use proto::hub::HubDbproxyCallbackSyncClient;
+
 use mongo::MongoProxy;
+
+type HubInputProtocol = TCompactInputProtocol<TFramedReadTransport<ReadHalf<TTcpChannel>>>;
+type HubOutputProtocol = TCompactOutputProtocol<TFramedWriteTransport<WriteHalf<TTcpChannel>>>;
 
 pub enum DBEventType {
     EvGetGuid,
@@ -112,6 +120,7 @@ impl DBEvGetObjectCount {
 }
 
 pub struct DBEvent {
+    pub hub_proxy: *mut HubDbproxyCallbackSyncClient<HubInputProtocol, HubOutputProtocol>,
     pub proxy: *mut MongoProxy,
     pub ev_type: DBEventType,
     pub db: String,
@@ -121,8 +130,9 @@ pub struct DBEvent {
 }
 
 impl DBEvent {
-    pub fn new(_proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
+    pub fn new(_hub_proxy: *mut HubDbproxyCallbackSyncClient<HubInputProtocol, HubOutputProtocol>, _proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
         DBEvent {
+            hub_proxy: _hub_proxy,
             proxy: _proxy,
             ev_type: _ev_type,
             db: _db,
