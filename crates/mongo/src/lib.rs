@@ -1,6 +1,6 @@
 use mongodb::options::{UpdateOptions, FindOneAndUpdateOptions, IndexOptions, ReturnDocument, FindOptions};
 use mongodb::{Client, options::ClientOptions, IndexModel};
-use mongodb::bson::{ doc, Document};
+use mongodb::bson::{doc, Document};
 use futures::stream::{TryStreamExt};
 
 pub struct MongoProxy {
