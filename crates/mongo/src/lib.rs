@@ -41,7 +41,7 @@ impl MongoProxy {
         }
     }
 
-    pub async fn save(&mut self, db: String, collection: String, data: Vec<u8>) -> bool {
+    pub async fn save(&mut self, db: String, collection: String, data: &Vec<u8>) -> bool {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -59,7 +59,7 @@ impl MongoProxy {
         }
     }
 
-    pub async fn update(&mut self, db: String, collection: String, query: Vec<u8>, update: Vec<u8>, is_upsert: bool) -> bool {
+    pub async fn update(&mut self, db: String, collection: String, query: &Vec<u8>, update: &Vec<u8>, is_upsert: bool) -> bool {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -85,7 +85,7 @@ impl MongoProxy {
         }
     }
 
-    pub async fn find_and_modify(&mut self, db: String, collection: String, query: Vec<u8>, update: Vec<u8>, _new: bool, _upsert: bool) -> Result<Option<Document>, Box<dyn std::error::Error> > {
+    pub async fn find_and_modify(&mut self, db: String, collection: String, query: &Vec<u8>, update: &Vec<u8>, _new: bool, _upsert: bool) -> Result<Option<Document>, Box<dyn std::error::Error> > {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -104,7 +104,7 @@ impl MongoProxy {
         Ok(result)
     }
 
-    pub async fn find(&mut self, db: String, collection: String, query: Vec<u8>, skip: u32, limit: u32, sort: String, _ascending: bool) -> Result<Vec<Document>, Box<dyn std::error::Error> >  {
+    pub async fn find(&mut self, db: String, collection: String, query: &Vec<u8>, skip: u32, limit: u32, sort: String, _ascending: bool) -> Result<Vec<Document>, Box<dyn std::error::Error> >  {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -118,7 +118,7 @@ impl MongoProxy {
         Ok(vec)
     }
 
-    pub async fn count(&mut self, db: String, collection: String, query: Vec<u8>) -> i32 {
+    pub async fn count(&mut self, db: String, collection: String, query: &Vec<u8>) -> i32 {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -136,7 +136,7 @@ impl MongoProxy {
         };
     }
 
-    pub async fn remove(&mut self, db: String, collection: String, query: Vec<u8>) -> bool {
+    pub async fn remove(&mut self, db: String, collection: String, query: &Vec<u8>) -> bool {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
