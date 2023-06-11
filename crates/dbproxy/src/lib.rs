@@ -2,6 +2,8 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::ptr::null;
+use std::thread;
+use std::time::Duration;
 
 use thrift::protocol::{TCompactInputProtocolFactory, TCompactOutputProtocolFactory, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
 use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory, TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TIoChannel, TTcpChannel };
@@ -12,6 +14,7 @@ use proto::hub::HubDbproxyCallbackSyncClient;
 
 use mongo::MongoProxy;
 use processor::Processor;
+use timer::utc_unix_timer;
 
 mod db;
 
@@ -35,6 +38,19 @@ impl DBProxyThriftServer {
 
     fn cast_mut(&self) -> &mut Self {
         unsafe { &mut * (self as * const Self as * mut Self) }
+    }
+
+    fn run(&mut self) {
+        let begin = utc_unix_timer();
+        self.processor.process(|ev_data| {
+            let mut mut_ev_data = ev_data;
+            mut_ev_data.do_event();
+        });
+        let tick = utc_unix_timer() - begin;
+
+        if tick < 33 {
+            thread::sleep(Duration::from_millis((33 - tick) as u64));
+        }
     }
 }
 

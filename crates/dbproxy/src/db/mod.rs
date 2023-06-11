@@ -1,11 +1,11 @@
-use std::any::{Any};
+use std::any::Any;
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
 use thrift::transport::{TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TTcpChannel };
 
 use proto::hub::{HubDbproxyCallbackSyncClient, THubDbproxyCallbackSyncClient};
 
-use mongodb::bson::{doc, Document};
+use mongodb::bson::doc;
 
 use mongo::MongoProxy;
 

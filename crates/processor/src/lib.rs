@@ -1,23 +1,26 @@
 use std::{collections::VecDeque};
+use std::sync::Mutex;
 
 pub struct Processor<T> {
-    que : VecDeque<T>
+    que : Mutex<VecDeque<T>>
 }
 
 impl <T> Processor<T> {
     pub fn new() -> Processor<T> {
         Processor {
-            que: VecDeque::new()
+            que: Mutex::new(VecDeque::new())
         }
     }
 
     pub fn enque(&mut self, t:T) {
-        self.que.push_back(t);
+        let mut que = self.que.lock().unwrap();
+        que.push_back(t);
     }
 
     pub fn process(&mut self, f:fn(T)) {
         loop {
-            let p = self.que.pop_back();
+            let mut que = self.que.lock().unwrap();
+            let p = que.pop_back();
             match p {
                 None => break,
                 Some(t) => f(t)
