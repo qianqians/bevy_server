@@ -42,8 +42,8 @@ impl DBProxyThriftServer {
     }
 
     fn deserialize(&self, data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error> > {
-        let mut t = TBufferChannel::with_capacity(0, data.len());
-        let _ = t.write(&data);
+        let mut t = TBufferChannel::with_capacity(data.len(), 0);
+        let _ = t.set_readable_bytes(&data);
         let mut i_prot = TCompactInputProtocol::new(t);
         let ev_data = DbEvent::read_from_in_protocol(&mut i_prot)?;
         Ok(ev_data)
