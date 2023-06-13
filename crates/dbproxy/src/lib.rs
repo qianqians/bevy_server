@@ -49,12 +49,18 @@ impl DBProxyThriftServer {
         Ok(ev_data)
     }
 
-    fn run(&mut self) {
+    async fn poll(&mut self) {
         let begin = utc_unix_timer();
-        self.processor.process(|ev_data| {
-            let mut mut_ev_data = ev_data;
-            mut_ev_data.do_event();
-        });
+        loop {
+            let opt_ev_data = self.processor.deque();
+            match opt_ev_data {
+                None => break,
+                Some(ev_data) => {
+                    let mut mut_ev_data = ev_data;
+                    mut_ev_data.do_event().await;
+                }
+            }
+        }
         let tick = utc_unix_timer() - begin;
 
         if tick < 33 {

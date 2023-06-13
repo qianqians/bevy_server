@@ -17,15 +17,9 @@ impl <T> Processor<T> {
         que.push_back(t);
     }
 
-    pub fn process(&mut self, f:fn(T)) {
-        loop {
-            let mut que = self.que.lock().unwrap();
-            let p = que.pop_back();
-            match p {
-                None => break,
-                Some(t) => f(t)
-            }
-        }
+    pub fn deque(&mut self) -> Option<T> {
+        let mut que = self.que.lock().unwrap();
+        que.pop_back()
     }
 }
 
@@ -40,9 +34,5 @@ fn test() {
         i: 1,
         str: "qianqians".to_string()
     });
-    p.process(|t|{
-        let num = t.i;
-        let _str = t.str;
-        print!("str:{0}, num:{1}", _str, num);
-    });
+    let _ = p.deque();
 }
