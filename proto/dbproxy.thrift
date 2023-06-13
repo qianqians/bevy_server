@@ -41,3 +41,17 @@ service dbproxy {
 	oneway void get_object_count(1:string db, 2:string collection, 3:string hub_name, 4:string callback_id, 5:binary query_info),
 
 }
+
+struct reg_hub_event {
+    1:string hub_name,
+    2:string host,
+    3:i32 port
+}
+
+union db_event_union {
+    1:reg_hub_event reg_hub
+}
+
+struct db_event {
+    
+}

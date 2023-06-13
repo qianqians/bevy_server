@@ -1,15 +1,17 @@
 use std::any::Any;
 use std::collections::HashMap;
+use std::io::Write;
 use std::sync::Mutex;
 use std::ptr::null;
 use std::thread;
 use std::time::Duration;
 
-use thrift::protocol::{TCompactInputProtocolFactory, TCompactOutputProtocolFactory, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol};
-use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory, TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TIoChannel, TTcpChannel };
+use mongodb::bson::de::Error;
+use thrift::protocol::{TCompactInputProtocolFactory, TCompactOutputProtocolFactory, TCompactInputProtocol, TCompactOutputProtocol, TInputProtocol, TOutputProtocol, TSerializable};
+use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory, TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TIoChannel, TTcpChannel, TBufferChannel, TReadTransport};
 use thrift::server::{TServer, TProcessor};
 
-use proto::dbproxy::{DbproxySyncHandler, DbproxySyncProcessor};
+use proto::dbproxy::{DbproxySyncHandler, DbproxySyncProcessor, DbEvent};
 use proto::hub::HubDbproxyCallbackSyncClient;
 
 use mongo::MongoProxy;
@@ -38,6 +40,14 @@ impl DBProxyThriftServer {
 
     fn cast_mut(&self) -> &mut Self {
         unsafe { &mut * (self as * const Self as * mut Self) }
+    }
+
+    fn deserialize(&self, data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error> > {
+        let mut t = TBufferChannel::with_capacity(0, data.len());
+        let _ = t.write(&data);
+        let mut i_prot = TCompactInputProtocol::new(t);
+        let ev_data = DbEvent::read_from_in_protocol(&mut i_prot)?;
+        Ok(ev_data)
     }
 
     fn run(&mut self) {

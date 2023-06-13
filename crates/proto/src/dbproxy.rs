@@ -27,6 +27,162 @@ use thrift::protocol::verify_required_field_exists;
 use thrift::server::TProcessor;
 
 //
+// RegHubEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct RegHubEvent {
+  pub hub_name: Option<String>,
+  pub host: Option<String>,
+  pub port: Option<i32>,
+}
+
+impl RegHubEvent {
+  pub fn new<F1, F2, F3>(hub_name: F1, host: F2, port: F3) -> RegHubEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<i32>> {
+    RegHubEvent {
+      hub_name: hub_name.into(),
+      host: host.into(),
+      port: port.into(),
+    }
+  }
+}
+
+impl TSerializable for RegHubEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<RegHubEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<i32> = Some(0);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_i32()?;
+          f_3 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = RegHubEvent {
+      hub_name: f_1,
+      host: f_2,
+      port: f_3,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("reg_hub_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.hub_name {
+      o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.host {
+      o_prot.write_field_begin(&TFieldIdentifier::new("host", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.port {
+      o_prot.write_field_begin(&TFieldIdentifier::new("port", TType::I32, 3))?;
+      o_prot.write_i32(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// DbEvent
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum DbEvent {
+  RegHub(RegHubEvent),
+}
+
+impl TSerializable for DbEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbEvent> {
+    let mut ret: Option<DbEvent> = None;
+    let mut received_field_count = 0;
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = RegHubEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::RegHub(val));
+          }
+          received_field_count += 1;
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+          received_field_count += 1;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    if received_field_count == 0 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received empty union from remote DbEvent"
+          )
+        )
+      )
+    } else if received_field_count > 1 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received multiple fields for union from remote DbEvent"
+          )
+        )
+      )
+    } else {
+      Ok(ret.expect("return value should have been constructed"))
+    }
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("db_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    match *self {
+      DbEvent::RegHub(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("reg_hub", TType::Struct, 1))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // dbproxy service client
 //
 
