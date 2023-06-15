@@ -15,3 +15,4 @@ proto = { path = "../proto", version = "0.1.0" }
 processor = { path = "../processor", version = "0.1.0" }
 timer = { path = "../timer", version = "0.1.0" }
 log = { path = "../log", version = "0.1.0" }
+net_pack = { path = "../net_pack", version = "0.1.0" }

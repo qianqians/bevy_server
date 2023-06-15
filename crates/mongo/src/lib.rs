@@ -2,7 +2,6 @@ use mongodb::options::{UpdateOptions, FindOneAndUpdateOptions, IndexOptions, Ret
 use mongodb::{Client, options::ClientOptions, IndexModel};
 use mongodb::bson::{doc, Document};
 use futures::stream::{TryStreamExt};
-
 pub struct MongoProxy {
     client : Client
 }
