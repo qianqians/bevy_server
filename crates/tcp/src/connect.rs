@@ -19,8 +19,9 @@ impl TcpConnect {
             let mut net_pack = NetPack::new();
             let mut net_rsp = NetResponse::new();
 
+            let (mut rd, mut wr) = io::split(_socket);
             loop {
-                match _socket.read(&mut buf).await {
+                match rd.read(&mut buf).await {
                     Ok(0) => return,
                     Ok(n) => {
                         net_pack.input(&buf[..n]);
@@ -34,6 +35,16 @@ impl TcpConnect {
                     Err(err) => {
                         error!("network err:{}!", err);
                         return;
+                    }
+                }
+
+                loop {
+                    let opt_send_data = net_rsp.deque();
+                    match opt_send_data {
+                        None => break,
+                        Some(send_data) => {
+                            let _ = wr.write_all(&send_data).await;
+                        }
                     }
                 }
             }

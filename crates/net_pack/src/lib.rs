@@ -62,4 +62,9 @@ impl NetResponse {
         let mut que = self.que.lock().unwrap();
         que.push_back(data);
     }
+
+    pub fn deque(&mut self) -> Option<Vec<u8>> {
+        let mut que = self.que.lock().unwrap();
+        que.pop_back()
+    }
 }

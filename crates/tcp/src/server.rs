@@ -1,6 +1,5 @@
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use tokio::task::JoinHandle;
 
 use tracing::{trace, debug, info, warn, error};
 
@@ -20,15 +19,16 @@ impl TcpServer {
 
     pub async fn run(&mut self, f:fn(rsp:&mut NetResponse, data:Vec<u8>)) -> Result<(), Box<dyn std::error::Error>> {
         loop {
-            let (mut socket, _) = self.listener.accept().await?;
+            let (socket, _) = self.listener.accept().await?;
 
             tokio::spawn(async move {
                 let mut buf = vec![0; 1024];
                 let mut net_pack = NetPack::new();
                 let mut net_rsp = NetResponse::new();
     
+                let (mut rd, mut wr) = io::split(socket);
                 loop {
-                    match socket.read(&mut buf).await {
+                    match rd.read(&mut buf).await {
                         Ok(0) => return,
                         Ok(n) => {
                             net_pack.input(&buf[..n]);
@@ -42,6 +42,16 @@ impl TcpServer {
                         Err(err) => {
                             error!("network err:{}!", err);
                             return;
+                        }
+                    }
+
+                    loop {
+                        let opt_send_data = net_rsp.deque();
+                        match opt_send_data {
+                            None => break,
+                            Some(send_data) => {
+                                let _ = wr.write_all(&send_data).await;
+                            }
                         }
                     }
                 }
