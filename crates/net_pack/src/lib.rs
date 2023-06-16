@@ -15,7 +15,7 @@ impl NetPack {
         self.buf.append(data)
     }
 
-    pub fn try_get_pack(&self) -> Option<Vec<u8>> {
+    pub fn try_get_pack(&mut self) -> Option<Vec<u8>> {
         let len0 = self.buf[0] as u32;
         let len1 = self.buf[1] as u32;
         let len2 = self.buf[2] as u32;
@@ -26,8 +26,23 @@ impl NetPack {
         }
         else {
             let len = new_pack_len as usize;
+            let idx = self.idx as usize;
             let mut buf = vec![0u8; len];
             buf.copy_from_slice(&self.buf[..len]);
+
+            let remain = idx - len;
+            if remain > 0 {
+                let mut tmp = vec![0u8; remain];
+                tmp.copy_from_slice(&self.buf[len..idx]);
+                self.buf.clear();
+                self.buf.copy_from_slice(&tmp[..]);
+                self.idx = remain as u32;
+            }
+            else {
+                self.buf.clear();
+                self.idx = 0;
+            }
+
             Some(buf)
         }
     }
