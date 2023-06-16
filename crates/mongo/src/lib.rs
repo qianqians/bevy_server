@@ -7,7 +7,7 @@ pub struct MongoProxy {
 }
 
 impl MongoProxy {
-    pub async fn new(url:String) -> Result<MongoProxy, Box<dyn std::error::Error> > {
+    pub async fn new(url:String) -> Result<MongoProxy, Box<dyn std::error::Error>> {
         let _client_options = ClientOptions::parse(url).await?;
         let _client = Client::with_options(_client_options)?;
         Ok(MongoProxy{ client : _client })
@@ -84,7 +84,7 @@ impl MongoProxy {
         }
     }
 
-    pub async fn find_and_modify(&mut self, db: String, collection: String, query: &Vec<u8>, update: &Vec<u8>, _new: bool, _upsert: bool) -> Result<Option<Document>, Box<dyn std::error::Error> > {
+    pub async fn find_and_modify(&mut self, db: String, collection: String, query: &Vec<u8>, update: &Vec<u8>, _new: bool, _upsert: bool) -> Result<Option<Document>, Box<dyn std::error::Error>> {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 
@@ -103,7 +103,7 @@ impl MongoProxy {
         Ok(result)
     }
 
-    pub async fn find(&mut self, db: String, collection: String, query: &Vec<u8>, skip: u32, limit: u32, sort: String, _ascending: bool) -> Result<Vec<Document>, Box<dyn std::error::Error> >  {
+    pub async fn find(&mut self, db: String, collection: String, query: &Vec<u8>, skip: u32, limit: u32, sort: String, _ascending: bool) -> Result<Vec<Document>, Box<dyn std::error::Error>>  {
         let _db = self.client.database(&db);
         let _collection  = _db.collection::<Document>(&collection);
 

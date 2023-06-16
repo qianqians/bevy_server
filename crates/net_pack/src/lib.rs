@@ -9,8 +9,8 @@ impl NetPack {
         }
     }
 
-    pub fn input(&mut self, data: &mut Vec<u8>) {
-        self.buf.append(data)
+    pub fn input(&mut self, data: &[u8]) {
+        self.buf.extend_from_slice(data)
     }
 
     pub fn try_get_pack(&mut self) -> Option<Vec<u8>> {
@@ -41,5 +41,25 @@ impl NetPack {
 
             Some(buf)
         }
+    }
+}
+
+use std::{collections::VecDeque};
+use std::sync::Mutex;
+
+pub struct NetResponse {
+    que : Mutex<VecDeque<Vec<u8>>>
+}
+
+impl NetResponse {
+    pub fn new() -> NetResponse {
+        NetResponse {
+            que: Mutex::new(VecDeque::new())
+        }
+    }
+
+    pub fn send(&mut self, data:Vec<u8>) {
+        let mut que = self.que.lock().unwrap();
+        que.push_back(data);
     }
 }
