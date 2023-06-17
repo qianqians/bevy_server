@@ -112,6 +112,717 @@ impl TSerializable for ClientInfo {
 }
 
 //
+// AckGetGuid
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckGetGuid {
+  pub callback_id: Option<String>,
+  pub guid: Option<i64>,
+}
+
+impl AckGetGuid {
+  pub fn new<F1, F2>(callback_id: F1, guid: F2) -> AckGetGuid where F1: Into<Option<String>>, F2: Into<Option<i64>> {
+    AckGetGuid {
+      callback_id: callback_id.into(),
+      guid: guid.into(),
+    }
+  }
+}
+
+impl TSerializable for AckGetGuid {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckGetGuid> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckGetGuid {
+      callback_id: f_1,
+      guid: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_guid");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.guid {
+      o_prot.write_field_begin(&TFieldIdentifier::new("guid", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckCreateObject
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckCreateObject {
+  pub callback_id: Option<String>,
+  pub result: Option<bool>,
+}
+
+impl AckCreateObject {
+  pub fn new<F1, F2>(callback_id: F1, result: F2) -> AckCreateObject where F1: Into<Option<String>>, F2: Into<Option<bool>> {
+    AckCreateObject {
+      callback_id: callback_id.into(),
+      result: result.into(),
+    }
+  }
+}
+
+impl TSerializable for AckCreateObject {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckCreateObject> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bool()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckCreateObject {
+      callback_id: f_1,
+      result: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_create_object");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.result {
+      o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckUpdataObject
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckUpdataObject {
+  pub callback_id: Option<String>,
+  pub result: Option<bool>,
+}
+
+impl AckUpdataObject {
+  pub fn new<F1, F2>(callback_id: F1, result: F2) -> AckUpdataObject where F1: Into<Option<String>>, F2: Into<Option<bool>> {
+    AckUpdataObject {
+      callback_id: callback_id.into(),
+      result: result.into(),
+    }
+  }
+}
+
+impl TSerializable for AckUpdataObject {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckUpdataObject> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bool()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckUpdataObject {
+      callback_id: f_1,
+      result: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_updata_object");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.result {
+      o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckFindAndModify
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckFindAndModify {
+  pub callback_id: Option<String>,
+  pub object_info: Option<Vec<u8>>,
+}
+
+impl AckFindAndModify {
+  pub fn new<F1, F2>(callback_id: F1, object_info: F2) -> AckFindAndModify where F1: Into<Option<String>>, F2: Into<Option<Vec<u8>>> {
+    AckFindAndModify {
+      callback_id: callback_id.into(),
+      object_info: object_info.into(),
+    }
+  }
+}
+
+impl TSerializable for AckFindAndModify {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckFindAndModify> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bytes()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckFindAndModify {
+      callback_id: f_1,
+      object_info: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_find_and_modify");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.object_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 2))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckRemoveObject
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckRemoveObject {
+  pub callback_id: Option<String>,
+  pub result: Option<bool>,
+}
+
+impl AckRemoveObject {
+  pub fn new<F1, F2>(callback_id: F1, result: F2) -> AckRemoveObject where F1: Into<Option<String>>, F2: Into<Option<bool>> {
+    AckRemoveObject {
+      callback_id: callback_id.into(),
+      result: result.into(),
+    }
+  }
+}
+
+impl TSerializable for AckRemoveObject {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckRemoveObject> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bool()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckRemoveObject {
+      callback_id: f_1,
+      result: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_remove_object");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.result {
+      o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckGetObjectCount
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckGetObjectCount {
+  pub callback_id: Option<String>,
+  pub count: Option<i32>,
+}
+
+impl AckGetObjectCount {
+  pub fn new<F1, F2>(callback_id: F1, count: F2) -> AckGetObjectCount where F1: Into<Option<String>>, F2: Into<Option<i32>> {
+    AckGetObjectCount {
+      callback_id: callback_id.into(),
+      count: count.into(),
+    }
+  }
+}
+
+impl TSerializable for AckGetObjectCount {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckGetObjectCount> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i32> = Some(0);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i32()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckGetObjectCount {
+      callback_id: f_1,
+      count: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_object_count");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.count {
+      o_prot.write_field_begin(&TFieldIdentifier::new("count", TType::I32, 2))?;
+      o_prot.write_i32(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckGetObjectInfo
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckGetObjectInfo {
+  pub callback_id: Option<String>,
+  pub object_info: Option<Vec<u8>>,
+}
+
+impl AckGetObjectInfo {
+  pub fn new<F1, F2>(callback_id: F1, object_info: F2) -> AckGetObjectInfo where F1: Into<Option<String>>, F2: Into<Option<Vec<u8>>> {
+    AckGetObjectInfo {
+      callback_id: callback_id.into(),
+      object_info: object_info.into(),
+    }
+  }
+}
+
+impl TSerializable for AckGetObjectInfo {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckGetObjectInfo> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_bytes()?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckGetObjectInfo {
+      callback_id: f_1,
+      object_info: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_object_info");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.object_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 2))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// AckGetObjectInfoEnd
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct AckGetObjectInfoEnd {
+  pub callback_id: Option<String>,
+}
+
+impl AckGetObjectInfoEnd {
+  pub fn new<F1>(callback_id: F1) -> AckGetObjectInfoEnd where F1: Into<Option<String>> {
+    AckGetObjectInfoEnd {
+      callback_id: callback_id.into(),
+    }
+  }
+}
+
+impl TSerializable for AckGetObjectInfoEnd {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<AckGetObjectInfoEnd> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = AckGetObjectInfoEnd {
+      callback_id: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ack_get_object_info_end");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// DbCallback
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum DbCallback {
+  GetGuid(AckGetGuid),
+  CreateObject(AckCreateObject),
+  UpdataObject(AckUpdataObject),
+  FindAndModify(AckFindAndModify),
+  RemoveObject(AckRemoveObject),
+  GetObjectCount(AckGetObjectCount),
+  GetObjectInfo(AckGetObjectInfo),
+  GetObjectInfoEnd(AckGetObjectInfoEnd),
+}
+
+impl TSerializable for DbCallback {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbCallback> {
+    let mut ret: Option<DbCallback> = None;
+    let mut received_field_count = 0;
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = AckGetGuid::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::GetGuid(val));
+          }
+          received_field_count += 1;
+        },
+        2 => {
+          let val = AckCreateObject::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::CreateObject(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
+          let val = AckUpdataObject::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::UpdataObject(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
+          let val = AckFindAndModify::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::FindAndModify(val));
+          }
+          received_field_count += 1;
+        },
+        5 => {
+          let val = AckRemoveObject::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::RemoveObject(val));
+          }
+          received_field_count += 1;
+        },
+        6 => {
+          let val = AckGetObjectCount::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::GetObjectCount(val));
+          }
+          received_field_count += 1;
+        },
+        7 => {
+          let val = AckGetObjectInfo::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::GetObjectInfo(val));
+          }
+          received_field_count += 1;
+        },
+        8 => {
+          let val = AckGetObjectInfoEnd::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbCallback::GetObjectInfoEnd(val));
+          }
+          received_field_count += 1;
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+          received_field_count += 1;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    if received_field_count == 0 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received empty union from remote DbCallback"
+          )
+        )
+      )
+    } else if received_field_count > 1 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received multiple fields for union from remote DbCallback"
+          )
+        )
+      )
+    } else {
+      Ok(ret.expect("return value should have been constructed"))
+    }
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("db_callback");
+    o_prot.write_struct_begin(&struct_ident)?;
+    match *self {
+      DbCallback::GetGuid(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_guid", TType::Struct, 1))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::CreateObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("create_object", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::UpdataObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("updata_object", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::FindAndModify(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("find_and_modify", TType::Struct, 4))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::RemoveObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("remove_object", TType::Struct, 5))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::GetObjectCount(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_object_count", TType::Struct, 6))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::GetObjectInfo(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_object_info", TType::Struct, 7))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbCallback::GetObjectInfoEnd(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_object_info_end", TType::Struct, 8))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // hub service client
 //
 
@@ -1407,911 +2118,6 @@ impl HubServiceNtfClientRequestServiceResult {
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("HubServiceNtfClientRequestServiceResult");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// hub_dbproxy_callback service client
-//
-
-pub trait THubDbproxyCallbackSyncClient {
-  fn ack_get_guid(&mut self, callback_id: String, guid: i64) -> thrift::Result<()>;
-  fn ack_create_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn ack_updata_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn ack_find_and_modify(&mut self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn ack_remove_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn ack_get_object_count(&mut self, callback_id: String, count: i32) -> thrift::Result<()>;
-  fn ack_get_object_info(&mut self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn ack_get_object_info_end(&mut self, callback_id: String) -> thrift::Result<()>;
-}
-
-pub trait THubDbproxyCallbackSyncClientMarker {}
-
-pub struct HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> HubDbproxyCallbackSyncClient<IP, OP> {
-    HubDbproxyCallbackSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> THubDbproxyCallbackSyncClientMarker for HubDbproxyCallbackSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + THubDbproxyCallbackSyncClientMarker> THubDbproxyCallbackSyncClient for C {
-  fn ack_get_guid(&mut self, callback_id: String, guid: i64) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_get_guid", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckGetGuidArgs { callback_id, guid };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_create_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_create_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckCreateObjectArgs { callback_id, result };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_updata_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_updata_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckUpdataObjectArgs { callback_id, result };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_find_and_modify(&mut self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_find_and_modify", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckFindAndModifyArgs { callback_id, object_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_remove_object(&mut self, callback_id: String, result: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_remove_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckRemoveObjectArgs { callback_id, result };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_get_object_count(&mut self, callback_id: String, count: i32) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_get_object_count", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckGetObjectCountArgs { callback_id, count };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_get_object_info(&mut self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_get_object_info", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckGetObjectInfoArgs { callback_id, object_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn ack_get_object_info_end(&mut self, callback_id: String) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ack_get_object_info_end", TMessageType::OneWay, self.sequence_number());
-        let call_args = HubDbproxyCallbackAckGetObjectInfoEndArgs { callback_id };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-}
-
-//
-// hub_dbproxy_callback service processor
-//
-
-pub trait HubDbproxyCallbackSyncHandler {
-  fn handle_ack_get_guid(&self, callback_id: String, guid: i64) -> thrift::Result<()>;
-  fn handle_ack_create_object(&self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn handle_ack_updata_object(&self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn handle_ack_find_and_modify(&self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn handle_ack_remove_object(&self, callback_id: String, result: bool) -> thrift::Result<()>;
-  fn handle_ack_get_object_count(&self, callback_id: String, count: i32) -> thrift::Result<()>;
-  fn handle_ack_get_object_info(&self, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn handle_ack_get_object_info_end(&self, callback_id: String) -> thrift::Result<()>;
-}
-
-pub struct HubDbproxyCallbackSyncProcessor<H: HubDbproxyCallbackSyncHandler> {
-  handler: H,
-}
-
-impl <H: HubDbproxyCallbackSyncHandler> HubDbproxyCallbackSyncProcessor<H> {
-  pub fn new(handler: H) -> HubDbproxyCallbackSyncProcessor<H> {
-    HubDbproxyCallbackSyncProcessor {
-      handler,
-    }
-  }
-  fn process_ack_get_guid(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_get_guid(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_create_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_create_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_updata_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_updata_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_find_and_modify(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_find_and_modify(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_remove_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_remove_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_get_object_count(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_get_object_count(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_get_object_info(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_get_object_info(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_ack_get_object_info_end(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubDbproxyCallbackProcessFunctions::process_ack_get_object_info_end(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct THubDbproxyCallbackProcessFunctions;
-
-impl THubDbproxyCallbackProcessFunctions {
-  pub fn process_ack_get_guid<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckGetGuidArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_get_guid(args.callback_id, args.guid) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_create_object<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckCreateObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_create_object(args.callback_id, args.result) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_updata_object<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckUpdataObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_updata_object(args.callback_id, args.result) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_find_and_modify<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckFindAndModifyArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_find_and_modify(args.callback_id, args.object_info) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_remove_object<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckRemoveObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_remove_object(args.callback_id, args.result) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_get_object_count<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckGetObjectCountArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_get_object_count(args.callback_id, args.count) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_get_object_info<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckGetObjectInfoArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_get_object_info(args.callback_id, args.object_info) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_ack_get_object_info_end<H: HubDbproxyCallbackSyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubDbproxyCallbackAckGetObjectInfoEndArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ack_get_object_info_end(args.callback_id) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: HubDbproxyCallbackSyncHandler> TProcessor for HubDbproxyCallbackSyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "ack_get_guid" => {
-        self.process_ack_get_guid(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_create_object" => {
-        self.process_ack_create_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_updata_object" => {
-        self.process_ack_updata_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_find_and_modify" => {
-        self.process_ack_find_and_modify(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_remove_object" => {
-        self.process_ack_remove_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_get_object_count" => {
-        self.process_ack_get_object_count(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_get_object_info" => {
-        self.process_ack_get_object_info(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "ack_get_object_info_end" => {
-        self.process_ack_get_object_info_end(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// HubDbproxyCallbackAckGetGuidArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckGetGuidArgs {
-  callback_id: String,
-  guid: i64,
-}
-
-impl HubDbproxyCallbackAckGetGuidArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetGuidArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<i64> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_i64()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetGuidArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetGuidArgs.guid", &f_2)?;
-    let ret = HubDbproxyCallbackAckGetGuidArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      guid: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_get_guid_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("guid", TType::I64, 2))?;
-    o_prot.write_i64(self.guid)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckCreateObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckCreateObjectArgs {
-  callback_id: String,
-  result: bool,
-}
-
-impl HubDbproxyCallbackAckCreateObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckCreateObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bool()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckCreateObjectArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckCreateObjectArgs.result", &f_2)?;
-    let ret = HubDbproxyCallbackAckCreateObjectArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      result: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_create_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
-    o_prot.write_bool(self.result)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckUpdataObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckUpdataObjectArgs {
-  callback_id: String,
-  result: bool,
-}
-
-impl HubDbproxyCallbackAckUpdataObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckUpdataObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bool()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckUpdataObjectArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckUpdataObjectArgs.result", &f_2)?;
-    let ret = HubDbproxyCallbackAckUpdataObjectArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      result: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_updata_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
-    o_prot.write_bool(self.result)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckFindAndModifyArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckFindAndModifyArgs {
-  callback_id: String,
-  object_info: Vec<u8>,
-}
-
-impl HubDbproxyCallbackAckFindAndModifyArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckFindAndModifyArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bytes()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckFindAndModifyArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckFindAndModifyArgs.object_info", &f_2)?;
-    let ret = HubDbproxyCallbackAckFindAndModifyArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      object_info: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_find_and_modify_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 2))?;
-    o_prot.write_bytes(&self.object_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckRemoveObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckRemoveObjectArgs {
-  callback_id: String,
-  result: bool,
-}
-
-impl HubDbproxyCallbackAckRemoveObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckRemoveObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bool()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckRemoveObjectArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckRemoveObjectArgs.result", &f_2)?;
-    let ret = HubDbproxyCallbackAckRemoveObjectArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      result: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_remove_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("result", TType::Bool, 2))?;
-    o_prot.write_bool(self.result)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckGetObjectCountArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckGetObjectCountArgs {
-  callback_id: String,
-  count: i32,
-}
-
-impl HubDbproxyCallbackAckGetObjectCountArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectCountArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<i32> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_i32()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetObjectCountArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetObjectCountArgs.count", &f_2)?;
-    let ret = HubDbproxyCallbackAckGetObjectCountArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      count: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_get_object_count_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("count", TType::I32, 2))?;
-    o_prot.write_i32(self.count)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckGetObjectInfoArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckGetObjectInfoArgs {
-  callback_id: String,
-  object_info: Vec<u8>,
-}
-
-impl HubDbproxyCallbackAckGetObjectInfoArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bytes()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoArgs.callback_id", &f_1)?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoArgs.object_info", &f_2)?;
-    let ret = HubDbproxyCallbackAckGetObjectInfoArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      object_info: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_get_object_info_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 2))?;
-    o_prot.write_bytes(&self.object_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubDbproxyCallbackAckGetObjectInfoEndArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubDbproxyCallbackAckGetObjectInfoEndArgs {
-  callback_id: String,
-}
-
-impl HubDbproxyCallbackAckGetObjectInfoEndArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubDbproxyCallbackAckGetObjectInfoEndArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubDbproxyCallbackAckGetObjectInfoEndArgs.callback_id", &f_1)?;
-    let ret = HubDbproxyCallbackAckGetObjectInfoEndArgs {
-      callback_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ack_get_object_info_end_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 1))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }

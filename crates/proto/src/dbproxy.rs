@@ -110,17 +110,17 @@ impl TSerializable for RegHubEvent {
 }
 
 //
-// DbEventUnion
+// DbEvent
 //
 
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum DbEventUnion {
+pub enum DbEvent {
   RegHub(RegHubEvent),
 }
 
-impl TSerializable for DbEventUnion {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbEventUnion> {
-    let mut ret: Option<DbEventUnion> = None;
+impl TSerializable for DbEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbEvent> {
+    let mut ret: Option<DbEvent> = None;
     let mut received_field_count = 0;
     i_prot.read_struct_begin()?;
     loop {
@@ -133,7 +133,7 @@ impl TSerializable for DbEventUnion {
         1 => {
           let val = RegHubEvent::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
-            ret = Some(DbEventUnion::RegHub(val));
+            ret = Some(DbEvent::RegHub(val));
           }
           received_field_count += 1;
         },
@@ -150,7 +150,7 @@ impl TSerializable for DbEventUnion {
         thrift::Error::Protocol(
           ProtocolError::new(
             ProtocolErrorKind::InvalidData,
-            "received empty union from remote DbEventUnion"
+            "received empty union from remote DbEvent"
           )
         )
       )
@@ -159,7 +159,7 @@ impl TSerializable for DbEventUnion {
         thrift::Error::Protocol(
           ProtocolError::new(
             ProtocolErrorKind::InvalidData,
-            "received multiple fields for union from remote DbEventUnion"
+            "received multiple fields for union from remote DbEvent"
           )
         )
       )
@@ -168,52 +168,15 @@ impl TSerializable for DbEventUnion {
     }
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("db_event_union");
+    let struct_ident = TStructIdentifier::new("db_event");
     o_prot.write_struct_begin(&struct_ident)?;
     match *self {
-      DbEventUnion::RegHub(ref f) => {
+      DbEvent::RegHub(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("reg_hub", TType::Struct, 1))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
     }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbEvent
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct DbEvent {
-}
-
-impl DbEvent {
-  pub fn new() -> DbEvent {
-    DbEvent {}
-  }
-}
-
-impl TSerializable for DbEvent {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbEvent> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbEvent {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("db_event");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }

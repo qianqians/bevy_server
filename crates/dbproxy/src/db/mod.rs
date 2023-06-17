@@ -1,18 +1,16 @@
 use std::any::Any;
 
-use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
-use thrift::transport::{TFramedReadTransport, TFramedWriteTransport, ReadHalf, WriteHalf, TTcpChannel };
+use futures::future::ok;
+use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol, TSerializable};
+use thrift::transport::{ReadHalf, WriteHalf, TIoChannel, TBufferChannel, TWriteTransport};
 
 use tracing::{trace, debug, info, warn, error};
-
-use proto::hub::{HubDbproxyCallbackSyncClient, THubDbproxyCallbackSyncClient};
-
 use mongodb::bson::doc;
 
-use mongo::MongoProxy;
+use proto::hub::{DbCallback, AckGetGuid, AckCreateObject, AckUpdataObject, AckFindAndModify, AckRemoveObject, AckGetObjectCount, AckGetObjectInfo, AckGetObjectInfoEnd};
 
-type HubInputProtocol = TCompactInputProtocol<TFramedReadTransport<ReadHalf<TTcpChannel>>>;
-type HubOutputProtocol = TCompactOutputProtocol<TFramedWriteTransport<WriteHalf<TTcpChannel>>>;
+use mongo::MongoProxy;
+use queue::Queue;
 
 pub enum DBEventType {
     EvGetGuid,
@@ -124,7 +122,7 @@ impl DBEvGetObjectCount {
 }
 
 pub struct DBEvent {
-    pub hub_proxy: *mut HubDbproxyCallbackSyncClient<HubInputProtocol, HubOutputProtocol>,
+    pub hub_proxy: *mut Queue<Box<Vec<u8>>>,
     pub proxy: *mut MongoProxy,
     pub ev_type: DBEventType,
     pub db: String,
@@ -134,7 +132,7 @@ pub struct DBEvent {
 }
 
 impl DBEvent {
-    pub fn new(_hub_proxy: *mut HubDbproxyCallbackSyncClient<HubInputProtocol, HubOutputProtocol>, _proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
+    pub fn new(_hub_proxy: *mut Queue<Box<Vec<u8>>>, _proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
         DBEvent {
             hub_proxy: _hub_proxy,
             proxy: _proxy,
@@ -146,15 +144,23 @@ impl DBEvent {
         }
     }
 
-    async fn do_get_guid(&mut self) {
+    async fn do_get_guid(&mut self) -> Result<(), Box<dyn std::error::Error>>  {
         trace!("begin do_get_guid");
         unsafe {
             if let Some(p_mongo) = self.proxy.as_mut() {
                 let guid = p_mongo.get_guid(self.db.to_string(), self.collection.to_string()).await;
                 if let Some(p_hub) = self.hub_proxy.as_mut() {
-                    let _ = p_hub.ack_get_guid(self.callback_id.to_string(), guid);
+                    let cb = DbCallback::GetGuid(AckGetGuid::new(self.callback_id.to_string(), guid));
+                    let t = TBufferChannel::with_capacity(0, 1024);
+                    let mut o_prot = TCompactOutputProtocol::new(t);
+                    let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot)?;
+                    let data = Box::new(t.write_bytes());
+                    if let Some(p_hub) = self.hub_proxy.as_mut() {
+                        let _ = p_hub.enque(data);
+                    }
                 }
             }
+            Ok(())
         }
     }
 

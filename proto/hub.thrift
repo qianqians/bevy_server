@@ -52,24 +52,54 @@ service hub_service {
 
 }
 
-service hub_dbproxy_callback {
+struct ack_get_guid {
+	1:string callback_id,
+	2:i64 guid
+}
 
-	oneway void ack_get_guid(1:string callback_id, 2:i64 guid),
+struct ack_create_object {
+	1:string callback_id,
+	2:bool result
+}
 
-	oneway void ack_create_object(1:string callback_id, 2:bool result),
+struct ack_updata_object {
+	1:string callback_id,
+	2:bool result
+}
 
-	oneway void ack_updata_object(1:string callback_id, 2:bool result),
+struct ack_find_and_modify {
+	1:string callback_id,
+	2:binary object_info
+}
 
-	oneway void ack_find_and_modify(1:string callback_id, 2:binary object_info),
+struct ack_remove_object {
+	1:string callback_id,
+	2:bool result
+}
 
-	oneway void ack_remove_object(1:string callback_id, 2:bool result),
+struct ack_get_object_count {
+	1:string callback_id,
+	2:i32 count
+}
 
-	oneway void ack_get_object_count(1:string callback_id, 2:i32 count),
+struct ack_get_object_info {
+	1:string callback_id,
+	2:binary object_info
+}
 
-	oneway void ack_get_object_info(1:string callback_id, 2:binary object_info),
+struct ack_get_object_info_end {
+	1:string callback_id
+}
 
-	oneway void ack_get_object_info_end(1:string callback_id)
-
+union db_callback {
+	1:ack_get_guid get_guid,
+	2:ack_create_object create_object,
+	3:ack_updata_object updata_object,
+	4:ack_find_and_modify find_and_modify,
+	5:ack_remove_object remove_object,
+	6:ack_get_object_count get_object_count,
+	7:ack_get_object_info get_object_info,
+	8:ack_get_object_info_end get_object_info_end
 }
 
 service hub_client_call_hub {

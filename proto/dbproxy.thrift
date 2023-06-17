@@ -48,10 +48,6 @@ struct reg_hub_event {
     3:i32 port
 }
 
-union db_event_union {
+union db_event {
     1:reg_hub_event reg_hub
-}
-
-struct db_event {
-    
 }

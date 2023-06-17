@@ -11,7 +11,6 @@ use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactor
 use thrift::server::{TServer, TProcessor};
 
 use proto::dbproxy::{DbproxySyncHandler, DbproxySyncProcessor, DbEvent};
-use proto::hub::HubDbproxyCallbackSyncClient;
 
 use mongo::MongoProxy;
 use queue::Queue;
@@ -25,15 +24,13 @@ type HubOutputProtocol = TCompactOutputProtocol<TFramedWriteTransport<WriteHalf<
 pub struct DBProxyThriftServer {
     proxy: MongoProxy,
     queue: Queue<Box<db::DBEvent>>,
-    hubs: Mutex<HashMap<String, *mut HubDbproxyCallbackSyncClient<HubInputProtocol, HubOutputProtocol>>>,
 }
 
 impl DBProxyThriftServer {
     pub fn new(_queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> DBProxyThriftServer {
         DBProxyThriftServer {
             proxy: mongo_proxy,
-            queue: _queue,
-            hubs: Mutex::new(HashMap::new()),
+            queue: _queue
         }
     }
 
@@ -41,7 +38,7 @@ impl DBProxyThriftServer {
         unsafe { &mut * (self as * const Self as * mut Self) }
     }
 
-    fn deserialize(&self, data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error> > {
+    fn deserialize(&self, data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
         let mut t = TBufferChannel::with_capacity(data.len(), 0);
         let _ = t.set_readable_bytes(&data);
         let mut i_prot = TCompactInputProtocol::new(t);
