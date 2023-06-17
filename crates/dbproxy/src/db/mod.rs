@@ -1,11 +1,11 @@
 use std::any::Any;
+use std::cmp;
 
-use futures::future::ok;
-use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol, TSerializable};
-use thrift::transport::{ReadHalf, WriteHalf, TIoChannel, TBufferChannel, TWriteTransport};
+use thrift::protocol::{TOutputProtocol, TCompactOutputProtocol, TSerializable};
+use thrift::transport::{TIoChannel, TBufferChannel};
 
 use tracing::{trace, debug, info, warn, error};
-use mongodb::bson::doc;
+use mongodb::bson::{doc, Document};
 
 use proto::hub::{DbCallback, AckGetGuid, AckCreateObject, AckUpdataObject, AckFindAndModify, AckRemoveObject, AckGetObjectCount, AckGetObjectInfo, AckGetObjectInfoEnd};
 
@@ -122,7 +122,7 @@ impl DBEvGetObjectCount {
 }
 
 pub struct DBEvent {
-    pub hub_proxy: *mut Queue<Box<Vec<u8>>>,
+    pub hub_proxy: *mut Queue<Vec<u8>>,
     pub proxy: *mut MongoProxy,
     pub ev_type: DBEventType,
     pub db: String,
@@ -131,8 +131,10 @@ pub struct DBEvent {
     pub ev_data: Box<dyn Any>
 }
 
+unsafe impl Send for DBEvent {}
+
 impl DBEvent {
-    pub fn new(_hub_proxy: *mut Queue<Box<Vec<u8>>>, _proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
+    pub fn new(_hub_proxy: *mut Queue<Vec<u8>>, _proxy: &mut MongoProxy, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
         DBEvent {
             hub_proxy: _hub_proxy,
             proxy: _proxy,
@@ -144,7 +146,7 @@ impl DBEvent {
         }
     }
 
-    async fn do_get_guid(&mut self) -> Result<(), Box<dyn std::error::Error>>  {
+    async fn do_get_guid(&mut self) {
         trace!("begin do_get_guid");
         unsafe {
             if let Some(p_mongo) = self.proxy.as_mut() {
@@ -152,19 +154,23 @@ impl DBEvent {
                 if let Some(p_hub) = self.hub_proxy.as_mut() {
                     let cb = DbCallback::GetGuid(AckGetGuid::new(self.callback_id.to_string(), guid));
                     let t = TBufferChannel::with_capacity(0, 1024);
-                    let mut o_prot = TCompactOutputProtocol::new(t);
-                    let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot)?;
-                    let data = Box::new(t.write_bytes());
-                    if let Some(p_hub) = self.hub_proxy.as_mut() {
-                        let _ = p_hub.enque(data);
-                    }
+                    let (rd, wr) = match t.split() {
+                        Ok(_t) => (_t.0, _t.1),
+                        Err(_e) => {
+                            error!("do_get_guid t.split error {}", _e);
+                            return;
+                        }
+                    };
+                    let mut o_prot = TCompactOutputProtocol::new(wr);
+                    let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                    let tmp = rd.write_bytes();
+                    let _ = p_hub.enque(tmp);
                 }
             }
-            Ok(())
         }
     }
 
-    async fn do_create_object(&mut self) {
+    async fn do_create_object(&mut self){
         trace!("begin do_create_object");
         unsafe {
             let tmp_mongo = self.proxy.as_mut();
@@ -185,7 +191,18 @@ impl DBEvent {
             };
             let result = p_mongo.save(self.db.to_string(), self.collection.to_string(), &ev_data.object_info).await;
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_create_object(self.callback_id.to_string(), result);
+                let cb = DbCallback::CreateObject(AckCreateObject::new(self.callback_id.to_string(), result));
+                let t = TBufferChannel::with_capacity(0, 1024);
+                let (rd, wr) = match t.split() {
+                    Ok(_t) => (_t.0, _t.1),
+                    Err(_e) => {
+                        error!("do_get_guid t.split error {}", _e);
+                        return;
+                    }
+                };
+                let mut o_prot = TCompactOutputProtocol::new(wr);
+                let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }
@@ -210,7 +227,18 @@ impl DBEvent {
             };
             let result = p_mongo.update(self.db.to_string(), self.collection.to_string(), &ev_data.query_info, &ev_data.updata_info, ev_data.upsert).await;
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_updata_object(self.callback_id.to_string(), result);
+                let cb = DbCallback::UpdataObject(AckUpdataObject::new(self.callback_id.to_string(), result));
+                let t = TBufferChannel::with_capacity(0, 1024);
+                let (rd, wr) = match t.split() {
+                    Ok(_t) => (_t.0, _t.1),
+                    Err(_e) => {
+                        error!("do_get_guid t.split error {}", _e);
+                        return;
+                    }
+                };
+                let mut o_prot = TCompactOutputProtocol::new(wr);
+                let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }
@@ -248,7 +276,19 @@ impl DBEvent {
             let mut bin: Vec<u8> = Vec::new();
             let _ = doc.to_writer(&mut bin);
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_find_and_modify(self.callback_id.to_string(), bin);
+                let wsize = (bin.len() + 1023) / 1024 * 1024;
+                let cb = DbCallback::FindAndModify(AckFindAndModify::new(self.callback_id.to_string(), bin));
+                let t = TBufferChannel::with_capacity(0, wsize);
+                let (rd, wr) = match t.split() {
+                    Ok(_t) => (_t.0, _t.1),
+                    Err(_e) => {
+                        error!("do_get_guid t.split error {}", _e);
+                        return;
+                    }
+                };
+                let mut o_prot = TCompactOutputProtocol::new(wr);
+                let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }
@@ -273,7 +313,18 @@ impl DBEvent {
             };
             let result = p_mongo.remove(self.db.to_string(), self.collection.to_string(), &ev_data.query_info).await;
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_remove_object(self.callback_id.to_string(), result);
+                let cb = DbCallback::RemoveObject(AckRemoveObject::new(self.callback_id.to_string(), result));
+                let t = TBufferChannel::with_capacity(0, 1024);
+                let (rd, wr) = match t.split() {
+                    Ok(_t) => (_t.0, _t.1),
+                    Err(_e) => {
+                        error!("do_get_guid t.split error {}", _e);
+                        return;
+                    }
+                };
+                let mut o_prot = TCompactOutputProtocol::new(wr);
+                let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }
@@ -304,11 +355,41 @@ impl DBEvent {
                 },
                 Ok(v) => v
             };
-            let doc = doc!{"__list__":docs};
-            let mut bin: Vec<u8> = Vec::new();
-            let _ = doc.to_writer(&mut bin);
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_get_object_info(self.callback_id.to_string(), bin);
+                let mut idx = 0;
+                while idx < docs.len() {
+                    let idx1 = cmp::min(docs.len(), idx + 32);
+                    let mut tmp: Vec<Document> = Vec::new();
+                    tmp.clone_from_slice(&docs[idx..idx1]);
+                    let doc = doc!{"__list__": tmp};
+                    idx = idx1;
+                    let mut bin: Vec<u8> = Vec::new();
+                    let _ = doc.to_writer(&mut bin);
+                    let cb = DbCallback::GetObjectInfo(AckGetObjectInfo::new(self.callback_id.to_string(), bin));
+                    let t = TBufferChannel::with_capacity(0, 1024);
+                    let (rd, wr) = match t.split() {
+                        Ok(_t) => (_t.0, _t.1),
+                        Err(_e) => {
+                            error!("do_get_guid t.split error {}", _e);
+                            return;
+                        }
+                    };
+                    let mut o_prot = TCompactOutputProtocol::new(wr);
+                    let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                    let _ = p_hub.enque(rd.write_bytes());
+                }
+                let cb = DbCallback::GetObjectInfoEnd(AckGetObjectInfoEnd::new(self.callback_id.to_string()));
+                    let t = TBufferChannel::with_capacity(0, 1024);
+                    let (rd, wr) = match t.split() {
+                        Ok(_t) => (_t.0, _t.1),
+                        Err(_e) => {
+                            error!("do_get_guid t.split error {}", _e);
+                            return;
+                        }
+                    };
+                    let mut o_prot = TCompactOutputProtocol::new(wr);
+                    let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                    let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }
@@ -333,7 +414,18 @@ impl DBEvent {
             };
             let count = p_mongo.count(self.db.to_string(), self.collection.to_string(), &ev_data.query_info).await;
             if let Some(p_hub) = self.hub_proxy.as_mut() {
-                let _ = p_hub.ack_get_object_count(self.callback_id.to_string(), count);
+                let cb = DbCallback::GetObjectCount(AckGetObjectCount::new(self.callback_id.to_string(), count));
+                let t = TBufferChannel::with_capacity(0, 1024);
+                let (rd, wr) = match t.split() {
+                    Ok(_t) => (_t.0, _t.1),
+                    Err(_e) => {
+                        error!("do_get_guid t.split error {}", _e);
+                        return;
+                    }
+                };
+                let mut o_prot = TCompactOutputProtocol::new(wr);
+                let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+                let _ = p_hub.enque(rd.write_bytes());
             }
         }
     }

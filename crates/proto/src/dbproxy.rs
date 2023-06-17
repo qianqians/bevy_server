@@ -33,16 +33,12 @@ use thrift::server::TProcessor;
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct RegHubEvent {
   pub hub_name: Option<String>,
-  pub host: Option<String>,
-  pub port: Option<i32>,
 }
 
 impl RegHubEvent {
-  pub fn new<F1, F2, F3>(hub_name: F1, host: F2, port: F3) -> RegHubEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<i32>> {
+  pub fn new<F1>(hub_name: F1) -> RegHubEvent where F1: Into<Option<String>> {
     RegHubEvent {
       hub_name: hub_name.into(),
-      host: host.into(),
-      port: port.into(),
     }
   }
 }
@@ -51,8 +47,69 @@ impl TSerializable for RegHubEvent {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<RegHubEvent> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = RegHubEvent {
+      hub_name: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("reg_hub_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.hub_name {
+      o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GetGuidEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GetGuidEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+}
+
+impl GetGuidEvent {
+  pub fn new<F1, F2, F3>(db: F1, collection: F2, callback_id: F3) -> GetGuidEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>> {
+    GetGuidEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+    }
+  }
+}
+
+impl TSerializable for GetGuidEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GetGuidEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
     let mut f_2: Option<String> = Some("".to_owned());
-    let mut f_3: Option<i32> = Some(0);
+    let mut f_3: Option<String> = Some("".to_owned());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -69,7 +126,7 @@ impl TSerializable for RegHubEvent {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_i32()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
         },
         _ => {
@@ -79,29 +136,722 @@ impl TSerializable for RegHubEvent {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = RegHubEvent {
-      hub_name: f_1,
-      host: f_2,
-      port: f_3,
+    let ret = GetGuidEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("reg_hub_event");
+    let struct_ident = TStructIdentifier::new("get_guid_event");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.hub_name {
-      o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 1))?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
-    if let Some(ref fld_var) = self.host {
-      o_prot.write_field_begin(&TFieldIdentifier::new("host", TType::String, 2))?;
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
-    if let Some(fld_var) = self.port {
-      o_prot.write_field_begin(&TFieldIdentifier::new("port", TType::I32, 3))?;
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CreateObjectEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CreateObjectEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub object_info: Option<Vec<u8>>,
+}
+
+impl CreateObjectEvent {
+  pub fn new<F1, F2, F3, F4>(db: F1, collection: F2, callback_id: F3, object_info: F4) -> CreateObjectEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>> {
+    CreateObjectEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      object_info: object_info.into(),
+    }
+  }
+}
+
+impl TSerializable for CreateObjectEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CreateObjectEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CreateObjectEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      object_info: f_4,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("create_object_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.object_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// UpdateObjectEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct UpdateObjectEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub query_info: Option<Vec<u8>>,
+  pub updata_info: Option<Vec<u8>>,
+  pub _upsert: Option<bool>,
+}
+
+impl UpdateObjectEvent {
+  pub fn new<F1, F2, F3, F4, F5, F6>(db: F1, collection: F2, callback_id: F3, query_info: F4, updata_info: F5, _upsert: F6) -> UpdateObjectEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>>, F5: Into<Option<Vec<u8>>>, F6: Into<Option<bool>> {
+    UpdateObjectEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      query_info: query_info.into(),
+      updata_info: updata_info.into(),
+      _upsert: _upsert.into(),
+    }
+  }
+}
+
+impl TSerializable for UpdateObjectEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<UpdateObjectEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_5: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_6: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_bytes()?;
+          f_5 = Some(val);
+        },
+        6 => {
+          let val = i_prot.read_bool()?;
+          f_6 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = UpdateObjectEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      query_info: f_4,
+      updata_info: f_5,
+      _upsert: f_6,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("update_object_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.query_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.updata_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 5))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self._upsert {
+      o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 6))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// FindAndModifyEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct FindAndModifyEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub query_info: Option<Vec<u8>>,
+  pub updata_info: Option<Vec<u8>>,
+  pub _new: Option<bool>,
+  pub _upsert: Option<bool>,
+}
+
+impl FindAndModifyEvent {
+  pub fn new<F1, F2, F3, F4, F5, F6, F7>(db: F1, collection: F2, callback_id: F3, query_info: F4, updata_info: F5, _new: F6, _upsert: F7) -> FindAndModifyEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>>, F5: Into<Option<Vec<u8>>>, F6: Into<Option<bool>>, F7: Into<Option<bool>> {
+    FindAndModifyEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      query_info: query_info.into(),
+      updata_info: updata_info.into(),
+      _new: _new.into(),
+      _upsert: _upsert.into(),
+    }
+  }
+}
+
+impl TSerializable for FindAndModifyEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<FindAndModifyEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_5: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_6: Option<bool> = Some(false);
+    let mut f_7: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_bytes()?;
+          f_5 = Some(val);
+        },
+        6 => {
+          let val = i_prot.read_bool()?;
+          f_6 = Some(val);
+        },
+        7 => {
+          let val = i_prot.read_bool()?;
+          f_7 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = FindAndModifyEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      query_info: f_4,
+      updata_info: f_5,
+      _new: f_6,
+      _upsert: f_7,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("find_and_modify_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.query_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.updata_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 5))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self._new {
+      o_prot.write_field_begin(&TFieldIdentifier::new("_new", TType::Bool, 6))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self._upsert {
+      o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 7))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// RemoveObjectEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct RemoveObjectEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub query_info: Option<Vec<u8>>,
+}
+
+impl RemoveObjectEvent {
+  pub fn new<F1, F2, F3, F4>(db: F1, collection: F2, callback_id: F3, query_info: F4) -> RemoveObjectEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>> {
+    RemoveObjectEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      query_info: query_info.into(),
+    }
+  }
+}
+
+impl TSerializable for RemoveObjectEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<RemoveObjectEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = RemoveObjectEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      query_info: f_4,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("remove_object_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.query_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GetObjectInfoEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GetObjectInfoEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub query_info: Option<Vec<u8>>,
+  pub skip: Option<i32>,
+  pub limit: Option<i32>,
+  pub sort: Option<String>,
+  pub ascending: Option<bool>,
+}
+
+impl GetObjectInfoEvent {
+  pub fn new<F1, F2, F3, F4, F5, F6, F7, F8>(db: F1, collection: F2, callback_id: F3, query_info: F4, skip: F5, limit: F6, sort: F7, ascending: F8) -> GetObjectInfoEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>>, F5: Into<Option<i32>>, F6: Into<Option<i32>>, F7: Into<Option<String>>, F8: Into<Option<bool>> {
+    GetObjectInfoEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      query_info: query_info.into(),
+      skip: skip.into(),
+      limit: limit.into(),
+      sort: sort.into(),
+      ascending: ascending.into(),
+    }
+  }
+}
+
+impl TSerializable for GetObjectInfoEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GetObjectInfoEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_5: Option<i32> = Some(0);
+    let mut f_6: Option<i32> = Some(0);
+    let mut f_7: Option<String> = Some("".to_owned());
+    let mut f_8: Option<bool> = Some(false);
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_i32()?;
+          f_5 = Some(val);
+        },
+        6 => {
+          let val = i_prot.read_i32()?;
+          f_6 = Some(val);
+        },
+        7 => {
+          let val = i_prot.read_string()?;
+          f_7 = Some(val);
+        },
+        8 => {
+          let val = i_prot.read_bool()?;
+          f_8 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GetObjectInfoEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      query_info: f_4,
+      skip: f_5,
+      limit: f_6,
+      sort: f_7,
+      ascending: f_8,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("get_object_info_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.query_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.skip {
+      o_prot.write_field_begin(&TFieldIdentifier::new("skip", TType::I32, 5))?;
       o_prot.write_i32(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.limit {
+      o_prot.write_field_begin(&TFieldIdentifier::new("limit", TType::I32, 6))?;
+      o_prot.write_i32(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.sort {
+      o_prot.write_field_begin(&TFieldIdentifier::new("sort", TType::String, 7))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.ascending {
+      o_prot.write_field_begin(&TFieldIdentifier::new("ascending", TType::Bool, 8))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// GetObjectCountEvent
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GetObjectCountEvent {
+  pub db: Option<String>,
+  pub collection: Option<String>,
+  pub callback_id: Option<String>,
+  pub query_info: Option<Vec<u8>>,
+}
+
+impl GetObjectCountEvent {
+  pub fn new<F1, F2, F3, F4>(db: F1, collection: F2, callback_id: F3, query_info: F4) -> GetObjectCountEvent where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>> {
+    GetObjectCountEvent {
+      db: db.into(),
+      collection: collection.into(),
+      callback_id: callback_id.into(),
+      query_info: query_info.into(),
+    }
+  }
+}
+
+impl TSerializable for GetObjectCountEvent {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GetObjectCountEvent> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_string()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GetObjectCountEvent {
+      db: f_1,
+      collection: f_2,
+      callback_id: f_3,
+      query_info: f_4,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("get_object_count_event");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.db {
+      o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.collection {
+      o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.callback_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.query_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 4))?;
+      o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
     }
     o_prot.write_field_stop()?;
@@ -116,6 +866,13 @@ impl TSerializable for RegHubEvent {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum DbEvent {
   RegHub(RegHubEvent),
+  GetGuid(GetGuidEvent),
+  CreateObject(CreateObjectEvent),
+  UpdateObject(UpdateObjectEvent),
+  FindAndModify(FindAndModifyEvent),
+  RemoveObject(RemoveObjectEvent),
+  GetObjectInfo(GetObjectInfoEvent),
+  GetObjectCount(GetObjectCountEvent),
 }
 
 impl TSerializable for DbEvent {
@@ -134,6 +891,55 @@ impl TSerializable for DbEvent {
           let val = RegHubEvent::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(DbEvent::RegHub(val));
+          }
+          received_field_count += 1;
+        },
+        2 => {
+          let val = GetGuidEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::GetGuid(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
+          let val = CreateObjectEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::CreateObject(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
+          let val = UpdateObjectEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::UpdateObject(val));
+          }
+          received_field_count += 1;
+        },
+        5 => {
+          let val = FindAndModifyEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::FindAndModify(val));
+          }
+          received_field_count += 1;
+        },
+        6 => {
+          let val = RemoveObjectEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::RemoveObject(val));
+          }
+          received_field_count += 1;
+        },
+        7 => {
+          let val = GetObjectInfoEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::GetObjectInfo(val));
+          }
+          received_field_count += 1;
+        },
+        8 => {
+          let val = GetObjectCountEvent::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(DbEvent::GetObjectCount(val));
           }
           received_field_count += 1;
         },
@@ -176,1342 +982,42 @@ impl TSerializable for DbEvent {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// dbproxy service client
-//
-
-pub trait TDbproxySyncClient {
-  fn reg_hub(&mut self, hub_name: String, host: String, port: i32) -> thrift::Result<bool>;
-  fn get_guid(&mut self, db: String, collection: String, hub_name: String, callback_id: String) -> thrift::Result<()>;
-  fn create_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn updata_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()>;
-  fn find_and_modify(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()>;
-  fn remove_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
-  fn get_object_info(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()>;
-  fn get_object_count(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
-}
-
-pub trait TDbproxySyncClientMarker {}
-
-pub struct DbproxySyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> DbproxySyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> DbproxySyncClient<IP, OP> {
-    DbproxySyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for DbproxySyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> TDbproxySyncClientMarker for DbproxySyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + TDbproxySyncClientMarker> TDbproxySyncClient for C {
-  fn reg_hub(&mut self, hub_name: String, host: String, port: i32) -> thrift::Result<bool> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("reg_hub", TMessageType::Call, self.sequence_number());
-        let call_args = DbproxyRegHubArgs { hub_name, host, port };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("reg_hub", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = DbproxyRegHubResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn get_guid(&mut self, db: String, collection: String, hub_name: String, callback_id: String) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_guid", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyGetGuidArgs { db, collection, hub_name, callback_id };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn create_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("create_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyCreateObjectArgs { db, collection, hub_name, callback_id, object_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn updata_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("updata_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyUpdataObjectArgs { db, collection, hub_name, callback_id, query_info, updata_info, _upsert };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn find_and_modify(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("find_and_modify", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyFindAndModifyArgs { db, collection, hub_name, callback_id, query_info, updata_info, _new, _upsert };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn remove_object(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("remove_object", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyRemoveObjectArgs { db, collection, hub_name, callback_id, query_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn get_object_info(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_object_info", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyGetObjectInfoArgs { db, collection, hub_name, callback_id, query_info, skip, limit, sort, ascending };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-  fn get_object_count(&mut self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("get_object_count", TMessageType::OneWay, self.sequence_number());
-        let call_args = DbproxyGetObjectCountArgs { db, collection, hub_name, callback_id, query_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    Ok(())
-  }
-}
-
-//
-// dbproxy service processor
-//
-
-pub trait DbproxySyncHandler {
-  fn handle_reg_hub(&self, hub_name: String, host: String, port: i32) -> thrift::Result<bool>;
-  fn handle_get_guid(&self, db: String, collection: String, hub_name: String, callback_id: String) -> thrift::Result<()>;
-  fn handle_create_object(&self, db: String, collection: String, hub_name: String, callback_id: String, object_info: Vec<u8>) -> thrift::Result<()>;
-  fn handle_updata_object(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _upsert: bool) -> thrift::Result<()>;
-  fn handle_find_and_modify(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, updata_info: Vec<u8>, _new: bool, _upsert: bool) -> thrift::Result<()>;
-  fn handle_remove_object(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
-  fn handle_get_object_info(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>, skip: i32, limit: i32, sort: String, ascending: bool) -> thrift::Result<()>;
-  fn handle_get_object_count(&self, db: String, collection: String, hub_name: String, callback_id: String, query_info: Vec<u8>) -> thrift::Result<()>;
-}
-
-pub struct DbproxySyncProcessor<H: DbproxySyncHandler> {
-  handler: H,
-}
-
-impl <H: DbproxySyncHandler> DbproxySyncProcessor<H> {
-  pub fn new(handler: H) -> DbproxySyncProcessor<H> {
-    DbproxySyncProcessor {
-      handler,
-    }
-  }
-  fn process_reg_hub(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_reg_hub(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_get_guid(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_get_guid(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_create_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_create_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_updata_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_updata_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_find_and_modify(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_find_and_modify(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_remove_object(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_remove_object(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_get_object_info(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_get_object_info(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_get_object_count(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TDbproxyProcessFunctions::process_get_object_count(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct TDbproxyProcessFunctions;
-
-impl TDbproxyProcessFunctions {
-  pub fn process_reg_hub<H: DbproxySyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyRegHubArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_reg_hub(args.hub_name, args.host, args.port) {
-      Ok(handler_return) => {
-        let message_ident = TMessageIdentifier::new("reg_hub", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = DbproxyRegHubResult { result_value: Some(handler_return) };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
+      DbEvent::GetGuid(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_guid", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
       },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("reg_hub", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("reg_hub", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
+      DbEvent::CreateObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("create_object", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbEvent::UpdateObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("update_object", TType::Struct, 4))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbEvent::FindAndModify(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("find_and_modify", TType::Struct, 5))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbEvent::RemoveObject(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("remove_object", TType::Struct, 6))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbEvent::GetObjectInfo(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_object_info", TType::Struct, 7))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      DbEvent::GetObjectCount(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("get_object_count", TType::Struct, 8))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
       },
     }
-  }
-  pub fn process_get_guid<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyGetGuidArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_guid(args.db, args.collection, args.hub_name, args.callback_id) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_create_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyCreateObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_create_object(args.db, args.collection, args.hub_name, args.callback_id, args.object_info) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_updata_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyUpdataObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_updata_object(args.db, args.collection, args.hub_name, args.callback_id, args.query_info, args.updata_info, args._upsert) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_find_and_modify<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyFindAndModifyArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_find_and_modify(args.db, args.collection, args.hub_name, args.callback_id, args.query_info, args.updata_info, args._new, args._upsert) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_remove_object<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyRemoveObjectArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_remove_object(args.db, args.collection, args.hub_name, args.callback_id, args.query_info) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_get_object_info<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyGetObjectInfoArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_object_info(args.db, args.collection, args.hub_name, args.callback_id, args.query_info, args.skip, args.limit, args.sort, args.ascending) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-  pub fn process_get_object_count<H: DbproxySyncHandler>(handler: &H, _: i32, i_prot: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = DbproxyGetObjectCountArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_get_object_count(args.db, args.collection, args.hub_name, args.callback_id, args.query_info) {
-      Ok(_) => {
-        Ok(())
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            Err(thrift::Error::Application(app_err))
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            Err(thrift::Error::Application(ret_err))
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: DbproxySyncHandler> TProcessor for DbproxySyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "reg_hub" => {
-        self.process_reg_hub(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "get_guid" => {
-        self.process_get_guid(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "create_object" => {
-        self.process_create_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "updata_object" => {
-        self.process_updata_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "find_and_modify" => {
-        self.process_find_and_modify(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "remove_object" => {
-        self.process_remove_object(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "get_object_info" => {
-        self.process_get_object_info(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "get_object_count" => {
-        self.process_get_object_count(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// DbproxyRegHubArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyRegHubArgs {
-  hub_name: String,
-  host: String,
-  port: i32,
-}
-
-impl DbproxyRegHubArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyRegHubArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<i32> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_i32()?;
-          f_3 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyRegHubArgs.hub_name", &f_1)?;
-    verify_required_field_exists("DbproxyRegHubArgs.host", &f_2)?;
-    verify_required_field_exists("DbproxyRegHubArgs.port", &f_3)?;
-    let ret = DbproxyRegHubArgs {
-      hub_name: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      host: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      port: f_3.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("reg_hub_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 1))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("host", TType::String, 2))?;
-    o_prot.write_string(&self.host)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("port", TType::I32, 3))?;
-    o_prot.write_i32(self.port)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyRegHubResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyRegHubResult {
-  result_value: Option<bool>,
-}
-
-impl DbproxyRegHubResult {
-  fn ok_or(self) -> thrift::Result<bool> {
-    if self.result_value.is_some() {
-      Ok(self.result_value.unwrap())
-    } else {
-      Err(
-        thrift::Error::Application(
-          ApplicationError::new(
-            ApplicationErrorKind::MissingResult,
-            "no result received for DbproxyRegHub"
-          )
-        )
-      )
-    }
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyRegHubResult> {
-    i_prot.read_struct_begin()?;
-    let mut f_0: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        0 => {
-          let val = i_prot.read_bool()?;
-          f_0 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = DbproxyRegHubResult {
-      result_value: f_0,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("DbproxyRegHubResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(fld_var) = self.result_value {
-      o_prot.write_field_begin(&TFieldIdentifier::new("result_value", TType::Bool, 0))?;
-      o_prot.write_bool(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetGuidArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetGuidArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-}
-
-impl DbproxyGetGuidArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetGuidArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyGetGuidArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyGetGuidArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyGetGuidArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyGetGuidArgs.callback_id", &f_4)?;
-    let ret = DbproxyGetGuidArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("get_guid_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyCreateObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyCreateObjectArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  object_info: Vec<u8>,
-}
-
-impl DbproxyCreateObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyCreateObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyCreateObjectArgs.object_info", &f_5)?;
-    let ret = DbproxyCreateObjectArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      object_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("create_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("object_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.object_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyUpdataObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyUpdataObjectArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  query_info: Vec<u8>,
-  updata_info: Vec<u8>,
-  _upsert: bool,
-}
-
-impl DbproxyUpdataObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyUpdataObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    let mut f_6: Option<Vec<u8>> = None;
-    let mut f_7: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        6 => {
-          let val = i_prot.read_bytes()?;
-          f_6 = Some(val);
-        },
-        7 => {
-          let val = i_prot.read_bool()?;
-          f_7 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.query_info", &f_5)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs.updata_info", &f_6)?;
-    verify_required_field_exists("DbproxyUpdataObjectArgs._upsert", &f_7)?;
-    let ret = DbproxyUpdataObjectArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-      updata_info: f_6.expect("auto-generated code should have checked for presence of required fields"),
-      _upsert: f_7.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("updata_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 6))?;
-    o_prot.write_bytes(&self.updata_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 7))?;
-    o_prot.write_bool(self._upsert)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyFindAndModifyArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyFindAndModifyArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  query_info: Vec<u8>,
-  updata_info: Vec<u8>,
-  _new: bool,
-  _upsert: bool,
-}
-
-impl DbproxyFindAndModifyArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyFindAndModifyArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    let mut f_6: Option<Vec<u8>> = None;
-    let mut f_7: Option<bool> = None;
-    let mut f_8: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        6 => {
-          let val = i_prot.read_bytes()?;
-          f_6 = Some(val);
-        },
-        7 => {
-          let val = i_prot.read_bool()?;
-          f_7 = Some(val);
-        },
-        8 => {
-          let val = i_prot.read_bool()?;
-          f_8 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.query_info", &f_5)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs.updata_info", &f_6)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs._new", &f_7)?;
-    verify_required_field_exists("DbproxyFindAndModifyArgs._upsert", &f_8)?;
-    let ret = DbproxyFindAndModifyArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-      updata_info: f_6.expect("auto-generated code should have checked for presence of required fields"),
-      _new: f_7.expect("auto-generated code should have checked for presence of required fields"),
-      _upsert: f_8.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("find_and_modify_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("updata_info", TType::String, 6))?;
-    o_prot.write_bytes(&self.updata_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_new", TType::Bool, 7))?;
-    o_prot.write_bool(self._new)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("_upsert", TType::Bool, 8))?;
-    o_prot.write_bool(self._upsert)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyRemoveObjectArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyRemoveObjectArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  query_info: Vec<u8>,
-}
-
-impl DbproxyRemoveObjectArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyRemoveObjectArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyRemoveObjectArgs.query_info", &f_5)?;
-    let ret = DbproxyRemoveObjectArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("remove_object_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetObjectInfoArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetObjectInfoArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  query_info: Vec<u8>,
-  skip: i32,
-  limit: i32,
-  sort: String,
-  ascending: bool,
-}
-
-impl DbproxyGetObjectInfoArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetObjectInfoArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    let mut f_6: Option<i32> = None;
-    let mut f_7: Option<i32> = None;
-    let mut f_8: Option<String> = None;
-    let mut f_9: Option<bool> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        6 => {
-          let val = i_prot.read_i32()?;
-          f_6 = Some(val);
-        },
-        7 => {
-          let val = i_prot.read_i32()?;
-          f_7 = Some(val);
-        },
-        8 => {
-          let val = i_prot.read_string()?;
-          f_8 = Some(val);
-        },
-        9 => {
-          let val = i_prot.read_bool()?;
-          f_9 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.query_info", &f_5)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.skip", &f_6)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.limit", &f_7)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.sort", &f_8)?;
-    verify_required_field_exists("DbproxyGetObjectInfoArgs.ascending", &f_9)?;
-    let ret = DbproxyGetObjectInfoArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-      skip: f_6.expect("auto-generated code should have checked for presence of required fields"),
-      limit: f_7.expect("auto-generated code should have checked for presence of required fields"),
-      sort: f_8.expect("auto-generated code should have checked for presence of required fields"),
-      ascending: f_9.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("get_object_info_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("skip", TType::I32, 6))?;
-    o_prot.write_i32(self.skip)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("limit", TType::I32, 7))?;
-    o_prot.write_i32(self.limit)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("sort", TType::String, 8))?;
-    o_prot.write_string(&self.sort)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("ascending", TType::Bool, 9))?;
-    o_prot.write_bool(self.ascending)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// DbproxyGetObjectCountArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct DbproxyGetObjectCountArgs {
-  db: String,
-  collection: String,
-  hub_name: String,
-  callback_id: String,
-  query_info: Vec<u8>,
-}
-
-impl DbproxyGetObjectCountArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DbproxyGetObjectCountArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<String> = None;
-    let mut f_3: Option<String> = None;
-    let mut f_4: Option<String> = None;
-    let mut f_5: Option<Vec<u8>> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_string()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_string()?;
-          f_4 = Some(val);
-        },
-        5 => {
-          let val = i_prot.read_bytes()?;
-          f_5 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.db", &f_1)?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.collection", &f_2)?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.hub_name", &f_3)?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.callback_id", &f_4)?;
-    verify_required_field_exists("DbproxyGetObjectCountArgs.query_info", &f_5)?;
-    let ret = DbproxyGetObjectCountArgs {
-      db: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      collection: f_2.expect("auto-generated code should have checked for presence of required fields"),
-      hub_name: f_3.expect("auto-generated code should have checked for presence of required fields"),
-      callback_id: f_4.expect("auto-generated code should have checked for presence of required fields"),
-      query_info: f_5.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("get_object_count_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("db", TType::String, 1))?;
-    o_prot.write_string(&self.db)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("collection", TType::String, 2))?;
-    o_prot.write_string(&self.collection)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("hub_name", TType::String, 3))?;
-    o_prot.write_string(&self.hub_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("callback_id", TType::String, 4))?;
-    o_prot.write_string(&self.callback_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("query_info", TType::String, 5))?;
-    o_prot.write_bytes(&self.query_info)?;
-    o_prot.write_field_end()?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
