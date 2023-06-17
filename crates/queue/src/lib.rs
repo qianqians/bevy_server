@@ -1,13 +1,13 @@
 use std::{collections::VecDeque};
 use std::sync::Mutex;
 
-pub struct Processor<T> {
+pub struct Queue<T> {
     que : Mutex<VecDeque<T>>
 }
 
-impl <T> Processor<T> {
-    pub fn new() -> Processor<T> {
-        Processor {
+impl <T> Queue<T> {
+    pub fn new() -> Queue<T> {
+        Queue {
             que: Mutex::new(VecDeque::new())
         }
     }
@@ -29,7 +29,7 @@ struct TestStruct {
 }
 
 fn test() {
-    let mut p = Processor::<TestStruct>::new();
+    let mut p = Queue::<TestStruct>::new();
     p.enque(TestStruct{
         i: 1,
         str: "qianqians".to_string()

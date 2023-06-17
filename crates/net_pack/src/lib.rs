@@ -43,28 +43,3 @@ impl NetPack {
         }
     }
 }
-
-use std::{collections::VecDeque};
-use std::sync::Mutex;
-
-pub struct NetResponse {
-    que : Mutex<VecDeque<Vec<u8>>>
-}
-
-impl NetResponse {
-    pub fn new() -> NetResponse {
-        NetResponse {
-            que: Mutex::new(VecDeque::new())
-        }
-    }
-
-    pub fn send(&mut self, data:Vec<u8>) {
-        let mut que = self.que.lock().unwrap();
-        que.push_back(data);
-    }
-
-    pub fn deque(&mut self) -> Option<Vec<u8>> {
-        let mut que = self.que.lock().unwrap();
-        que.pop_back()
-    }
-}

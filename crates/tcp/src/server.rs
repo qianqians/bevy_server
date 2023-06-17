@@ -3,7 +3,8 @@ use tokio::net::TcpListener;
 
 use tracing::{trace, debug, info, warn, error};
 
-use net_pack::{NetPack, NetResponse};
+use net_pack::NetPack;
+use queue::Queue;
 
 struct TcpServer {
     listener: TcpListener
@@ -17,14 +18,14 @@ impl TcpServer {
         })
     }
 
-    pub async fn run(&mut self, f:fn(rsp:&mut NetResponse, data:Vec<u8>)) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run(&mut self, f:fn(rsp:&mut Queue<Vec<u8>>, data:Vec<u8>)) -> Result<(), Box<dyn std::error::Error>> {
         loop {
             let (socket, _) = self.listener.accept().await?;
 
             tokio::spawn(async move {
                 let mut buf = vec![0; 1024];
                 let mut net_pack = NetPack::new();
-                let mut net_rsp = NetResponse::new();
+                let mut net_rsp:Queue<Vec<u8>> = Queue::new();
     
                 let (mut rd, mut wr) = io::split(socket);
                 loop {
