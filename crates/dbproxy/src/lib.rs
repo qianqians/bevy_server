@@ -21,6 +21,14 @@ pub struct DBProxyThriftServer {
     queue: Queue<Box<db::DBEvent>>
 }
 
+fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
+    let mut t = TBufferChannel::with_capacity(data.len(), 0);
+    let _ = t.set_readable_bytes(&data);
+    let mut i_prot = TCompactInputProtocol::new(t);
+    let ev_data = DbEvent::read_from_in_protocol(&mut i_prot)?;
+    Ok(ev_data)
+}
+
 impl DBProxyThriftServer {
     pub async fn new(host:String, _queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> Result<Arc<DBProxyThriftServer>, Box<dyn std::error::Error>> {
         let mut _tcp_s = TcpServer::new(host).await?;
@@ -28,10 +36,10 @@ impl DBProxyThriftServer {
             proxy: mongo_proxy,
             queue: _queue
         });
-        let mut _s = Arc::clone(&_db_server);
+        let mut _s = _db_server.clone();
         tokio::spawn( async move {
             loop {
-                let mut _s_handle = Arc::clone(&_s);
+                let mut _s_handle = _s.clone();
                 let _ = _tcp_s.run(DBProxyThriftServer::do_event, _s_handle).await;
             }
         });
@@ -40,14 +48,6 @@ impl DBProxyThriftServer {
 
     fn cast_mut(&self) -> &mut Self {
         unsafe { &mut * (self as * const Self as * mut Self) }
-    }
-
-    fn deserialize(&self, data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
-        let mut t = TBufferChannel::with_capacity(data.len(), 0);
-        let _ = t.set_readable_bytes(&data);
-        let mut i_prot = TCompactInputProtocol::new(t);
-        let ev_data = DbEvent::read_from_in_protocol(&mut i_prot)?;
-        Ok(ev_data)
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp:&mut Queue<Vec<u8>>) {
@@ -346,7 +346,7 @@ impl DBProxyThriftServer {
 
     fn do_event(_handle: Arc<DBProxyThriftServer>, rsp:&mut Queue<Vec<u8>>, data:Vec<u8>) {
         let _p = _handle.cast_mut();
-        let ev = match _p.deserialize(data) {
+        let ev = match deserialize(data) {
             Err(e) => {
                 error!("DBProxyThriftServer do_event err:{}", e);
                 return;
