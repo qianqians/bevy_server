@@ -160,7 +160,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let tmp = rd.write_bytes();
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(tmp);
     }
 
@@ -186,7 +186,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(rd.write_bytes());
     }
 
@@ -212,7 +212,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(rd.write_bytes());
     }
 
@@ -252,7 +252,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(rd.write_bytes());
     }
 
@@ -278,7 +278,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(rd.write_bytes());
     }
 
@@ -300,7 +300,7 @@ impl DBEvent {
             },
             Ok(v) => v
         };
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let mut idx = 0;
         while idx < docs.len() {
             let idx1 = cmp::min(docs.len(), idx + 32);
@@ -359,7 +359,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let p_send = self.send_proxy.as_ref().lock().unwrap();
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
         let _ = p_send.enque(rd.write_bytes());
     }
 

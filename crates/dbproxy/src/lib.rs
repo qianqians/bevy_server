@@ -30,12 +30,12 @@ fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
 }
 
 impl DBProxyThriftServer {
-    pub async fn new(host:String, _queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> Result<Arc<DBProxyThriftServer>, Box<dyn std::error::Error>> {
+    pub async fn new(host:String, _queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> Result<Arc<Mutex<DBProxyThriftServer>>, Box<dyn std::error::Error>> {
         let mut _tcp_s = TcpServer::new(host).await?;
-        let mut _db_server = Arc::new(DBProxyThriftServer {
+        let mut _db_server = Arc::new(Mutex::new(DBProxyThriftServer {
             proxy: mongo_proxy,
             queue: _queue
-        });
+        }));
         let mut _s = _db_server.clone();
         tokio::spawn( async move {
             loop {
@@ -44,10 +44,6 @@ impl DBProxyThriftServer {
             }
         });
         Ok(_db_server)
-    }
-
-    fn cast_mut(&self) -> &mut Self {
-        unsafe { &mut * (self as * const Self as * mut Self) }
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
@@ -344,8 +340,8 @@ impl DBProxyThriftServer {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_event(_handle: Arc<DBProxyThriftServer>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data: Vec<u8>) {
-        let _p = _handle.cast_mut();
+    fn do_event(_handle: Arc<Mutex<DBProxyThriftServer>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data: Vec<u8>) {
+        let mut _p = _handle.as_ref().lock().unwrap();
         let ev = match deserialize(data) {
             Err(e) => {
                 error!("DBProxyThriftServer do_event err:{}", e);

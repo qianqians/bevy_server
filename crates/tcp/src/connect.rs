@@ -15,7 +15,7 @@ pub struct TcpConnect {
 }
 
 impl TcpConnect {
-    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<H>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<H>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
+    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
         let mut _socket = TcpStream::connect(host).await?;
 
         let _join = tokio::spawn(async move {
@@ -44,16 +44,18 @@ impl TcpConnect {
                     }
                 }
 
-                let _net_rsp = net_rsp.as_ref().lock().unwrap();
+                let mut wait_send_data: Vec<u8> = Vec::new(); 
                 loop {
+                    let mut _net_rsp = net_rsp.as_ref().lock().unwrap();
                     let opt_send_data = _net_rsp.deque();
                     match opt_send_data {
                         None => break,
-                        Some(send_data) => {
-                            let _ = wr.write_all(&send_data).await;
+                        Some(mut send_data) => {
+                            wait_send_data.append(&mut send_data);
                         }
                     }
                 }
+                let _ = wr.write_all(&wait_send_data).await;
             }
         });
 
