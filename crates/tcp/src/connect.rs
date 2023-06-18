@@ -21,7 +21,7 @@ impl TcpConnect {
         let _join = tokio::spawn(async move {
             let mut buf = vec![0; 1024];
             let mut net_pack = NetPack::new();
-            let mut net_rsp:Arc<Mutex<Queue<Vec<u8>>>> = Arc::new(Mutex::new(Queue::new()));
+            let net_rsp:Arc<Mutex<Queue<Vec<u8>>>> = Arc::new(Mutex::new(Queue::new()));
 
             let (mut rd, mut wr) = io::split(_socket);
             loop {
