@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Mutex, Arc};
 use std::marker::{Send, Sync};
 
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
@@ -15,13 +15,13 @@ pub struct TcpConnect {
 }
 
 impl TcpConnect {
-    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<H>, rsp:&mut Queue<Vec<u8>>, data:Vec<u8>), _handle: Arc<H>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
+    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<H>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<H>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
         let mut _socket = TcpStream::connect(host).await?;
 
         let _join = tokio::spawn(async move {
             let mut buf = vec![0; 1024];
             let mut net_pack = NetPack::new();
-            let mut net_rsp:Queue<Vec<u8>> = Queue::new();
+            let mut net_rsp:Arc<Mutex<Queue<Vec<u8>>>> = Arc::new(Mutex::new(Queue::new()));
 
             let (mut rd, mut wr) = io::split(_socket);
             loop {
@@ -33,7 +33,8 @@ impl TcpConnect {
                             None => continue,
                             Some(data) => {
                                 let _h = _handle.clone();
-                                f(_h, &mut net_rsp, data);
+                                let _rsp = net_rsp.clone();
+                                f(_h, _rsp, data);
                             }
                         }
                     }
@@ -43,8 +44,9 @@ impl TcpConnect {
                     }
                 }
 
+                let _net_rsp = net_rsp.as_ref().lock().unwrap();
                 loop {
-                    let opt_send_data = net_rsp.deque();
+                    let opt_send_data = _net_rsp.deque();
                     match opt_send_data {
                         None => break,
                         Some(send_data) => {

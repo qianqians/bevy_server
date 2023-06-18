@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Mutex, Arc};
 use std::thread;
 use std::time::Duration;
 
@@ -50,7 +50,7 @@ impl DBProxyThriftServer {
         unsafe { &mut * (self as * const Self as * mut Self) }
     }
 
-    fn do_get_guid(&mut self, _data: GetGuidEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let ev_data = db::DBEvGetGuid::new();
         let db = match _data.db {
             None => {
@@ -73,11 +73,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvGetGuid, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp,  db::DBEventType::EvGetGuid, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_create_object(&mut self, _data: CreateObjectEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_create_object(&mut self, _data: CreateObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let object_info = match _data.object_info {
             None => {
                 error!("DBProxyThriftServer do_event CreateObjectEvent object_info is None!");
@@ -107,11 +107,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvCreateObject, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvCreateObject, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_update_object(&mut self, _data: UpdateObjectEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_update_object(&mut self, _data: UpdateObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event UpdateObjectEvent object_info is None!");
@@ -155,11 +155,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvUpdataObject, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvUpdataObject, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_find_and_modify(&mut self, _data: FindAndModifyEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_find_and_modify(&mut self, _data: FindAndModifyEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event FindAndModifyEvent query_info is None!");
@@ -210,11 +210,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvFindAndModify, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvFindAndModify, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_remove_object(&mut self, _data: RemoveObjectEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_remove_object(&mut self, _data: RemoveObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event RemoveObjectEvent query_info is None!");
@@ -244,11 +244,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvRemoveObject, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvRemoveObject, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_get_object_info(&mut self, _data: GetObjectInfoEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_get_object_info(&mut self, _data: GetObjectInfoEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectInfoEvent query_info is None!");
@@ -306,11 +306,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvGetObjectInfo, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvGetObjectInfo, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_get_object_count(&mut self, _data: GetObjectCountEvent, rsp:&mut Queue<Vec<u8>>) {
+    fn do_get_object_count(&mut self, _data: GetObjectCountEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectCountEvent query_info is None!");
@@ -340,11 +340,11 @@ impl DBProxyThriftServer {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, &mut self.proxy, db::DBEventType::EvGetGuid, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvGetGuid, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_event(_handle: Arc<DBProxyThriftServer>, rsp:&mut Queue<Vec<u8>>, data:Vec<u8>) {
+    fn do_event(_handle: Arc<DBProxyThriftServer>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data: Vec<u8>) {
         let _p = _handle.cast_mut();
         let ev = match deserialize(data) {
             Err(e) => {
@@ -387,7 +387,7 @@ impl DBProxyThriftServer {
                 None => break,
                 Some(ev_data) => {
                     let mut mut_ev_data = ev_data;
-                    mut_ev_data.do_event().await;
+                    mut_ev_data.do_event(&mut self.proxy).await;
                 }
             }
         }

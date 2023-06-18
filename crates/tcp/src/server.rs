@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Mutex, Arc};
 use std::marker::{Send, Sync};
 
 use tokio::io::{self, AsyncReadExt, AsyncWriteExt};
@@ -21,13 +21,13 @@ impl TcpServer {
         })
     }
 
-    pub async fn run<H: Send + Sync + 'static>(& mut self, f:fn(_handle: Arc<H>, rsp:&mut Queue<Vec<u8>>, data:Vec<u8>), _handle: Arc<H>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run<H: Send + Sync + 'static>(& mut self, f:fn(_handle: Arc<H>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<H>) -> Result<(), Box<dyn std::error::Error>> {
         let (socket, _) = self.listener.accept().await?;
 
         tokio::spawn(async move {
             let mut buf = vec![0; 1024];
             let mut net_pack = NetPack::new();
-            let mut net_rsp:Queue<Vec<u8>> = Queue::new();
+            let mut net_rsp:Arc<Mutex<Queue<Vec<u8>>>> = Arc::new(Mutex::new(Queue::new()));
     
             let (mut rd, mut wr) = io::split(socket);
             loop {
@@ -39,7 +39,8 @@ impl TcpServer {
                             None => continue,
                             Some(data) => {
                                 let _h = _handle.clone();
-                                f(_h, &mut net_rsp, data);
+                                let _rsp = net_rsp.clone();
+                                f(_h, _rsp, data);
                             }
                         }
                     }
@@ -49,8 +50,9 @@ impl TcpServer {
                     }
                 }
 
+                let _net_rsp = net_rsp.as_ref().lock().unwrap();
                 loop {
-                    let opt_send_data = net_rsp.deque();
+                    let opt_send_data = _net_rsp.deque();
                     match opt_send_data {
                         None => break,
                         Some(send_data) => {
