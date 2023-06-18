@@ -12,13 +12,15 @@ use proto::dbproxy::{DbEvent, GetGuidEvent, CreateObjectEvent, UpdateObjectEvent
 use mongo::MongoProxy;
 use queue::Queue;
 use tcp::server::TcpServer;
+use close_handle::CloseHandle;
 use timer::utc_unix_timer;
 
 mod db;
 
 pub struct DBProxyThriftServer {
     proxy: MongoProxy,
-    queue: Queue<Box<db::DBEvent>>
+    queue: Queue<Box<db::DBEvent>>,
+    close: Arc<Mutex<CloseHandle>>
 }
 
 fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
@@ -32,15 +34,24 @@ fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
 impl DBProxyThriftServer {
     pub async fn new(host:String, _queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> Result<Arc<Mutex<DBProxyThriftServer>>, Box<dyn std::error::Error>> {
         let mut _tcp_s = TcpServer::new(host).await?;
+        let mut _close = Arc::new(Mutex::new(CloseHandle::new()));
+        let _c = _close.clone();
         let mut _db_server = Arc::new(Mutex::new(DBProxyThriftServer {
             proxy: mongo_proxy,
-            queue: _queue
+            queue: _queue,
+            close: _close
         }));
         let mut _s = _db_server.clone();
         tokio::spawn( async move {
             loop {
                 let mut _s_handle = _s.clone();
-                let _ = _tcp_s.run(DBProxyThriftServer::do_event, _s_handle).await;
+                let mut _c_handle = _c.clone();
+                let _ = _tcp_s.run(DBProxyThriftServer::do_event, _s_handle, _c_handle).await;
+
+                let _c_ref = _c.as_ref().lock().unwrap();
+                if _c_ref.is_closed() {
+                    break;
+                }
             }
         });
         Ok(_db_server)

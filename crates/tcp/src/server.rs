@@ -8,6 +8,7 @@ use tracing::{trace, debug, info, warn, error};
 
 use net_pack::NetPack;
 use queue::Queue;
+use close_handle::CloseHandle;
 
 pub struct TcpServer{
     listener: TcpListener
@@ -21,7 +22,7 @@ impl TcpServer {
         })
     }
 
-    pub async fn run<H: Send + Sync + 'static>(& mut self, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn run<H: Send + Sync + 'static>(& mut self, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<(), Box<dyn std::error::Error>> {
         let (socket, _) = self.listener.accept().await?;
 
         tokio::spawn(async move {
@@ -62,6 +63,11 @@ impl TcpServer {
                     }
                 }
                 let _ = wr.write_all(&wait_send_data).await;
+
+                let _c_ref = _close.as_ref().lock().unwrap();
+                if _c_ref.is_closed() {
+                    break;
+                }
             }
         });
         Ok(())

@@ -9,13 +9,14 @@ use tracing::{trace, debug, info, warn, error};
 
 use net_pack::NetPack;
 use queue::Queue;
+use close_handle::CloseHandle;
 
 pub struct TcpConnect {
     join: JoinHandle<()>
 }
 
 impl TcpConnect {
-    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
+    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
         let mut _socket = TcpStream::connect(host).await?;
 
         let _join = tokio::spawn(async move {
@@ -56,6 +57,11 @@ impl TcpConnect {
                     }
                 }
                 let _ = wr.write_all(&wait_send_data).await;
+
+                let _c_ref = _close.as_ref().lock().unwrap();
+                if _c_ref.is_closed() {
+                    break;
+                }
             }
         });
 
