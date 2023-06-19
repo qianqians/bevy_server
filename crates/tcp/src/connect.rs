@@ -12,11 +12,11 @@ use queue::Queue;
 use close_handle::CloseHandle;
 
 pub struct TcpConnect {
-    join: JoinHandle<()>
+    pub join: JoinHandle<()>
 }
 
 impl TcpConnect {
-    pub async fn new<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
+    pub async fn connect<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<TcpConnect, Box<dyn std::error::Error>> {
         let mut _socket = TcpStream::connect(host).await?;
 
         let _join = tokio::spawn(async move {

@@ -23,7 +23,7 @@ pub struct DBProxyThriftServer {
     proxy: MongoProxy,
     queue: Queue<Box<db::DBEvent>>,
     close_handle: Arc<Mutex<CloseHandle>>,
-    join: Option<JoinHandle<()>>
+    server: Option<TcpServer>
 }
 
 fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
@@ -36,45 +36,32 @@ fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
 
 impl DBProxyThriftServer {
     pub async fn new(host:String, _queue: Queue<Box<db::DBEvent>>, mongo_proxy:MongoProxy) -> Result<Arc<Mutex<DBProxyThriftServer>>, Box<dyn std::error::Error>> {
-        let mut _tcp_s = TcpServer::new(host).await?;
         let mut _close = Arc::new(Mutex::new(CloseHandle::new()));
         let _c = _close.clone();
         let mut _db_server = Arc::new(Mutex::new(DBProxyThriftServer {
             proxy: mongo_proxy,
             queue: _queue,
             close_handle: _close,
-            join: None
+            server: None
         }));
+        let mut _s = _db_server.clone();
         let mut _s_tmp = _db_server.clone();
         let mut _s_handle = _s_tmp.as_ref().lock().unwrap();
-        let mut _s = _db_server.clone();
-        _s_handle.join = Some(tokio::spawn( async move {
-            loop {
-                let mut _s_handle = _s.clone();
-                let mut _c_handle = _c.clone();
-                let _ = _tcp_s.run(DBProxyThriftServer::do_event, _s_handle, _c_handle).await;
-
-                let _c_ref = _c.as_ref().lock().unwrap();
-                if _c_ref.is_closed() {
-                    break;
-                }
-            }
-        }));
+        _s_handle.server = Some(TcpServer::listen(host, DBProxyThriftServer::do_event, _s, _c).await?);
         Ok(_db_server)
     }
 
     pub async fn close(self) {
         let mut _c_handle = self.close_handle.as_ref().lock().unwrap();
         _c_handle.close();
-        let _join = self.join;
-        let mut _join_handle = match _join {
+        let mut _server_handle = match self.server {
             None => {
                 error!("DBProxyThriftServer close close handle is none!");
                 return;
             },
             Some(_j) => _j
         };
-        let _ = _join_handle.await;
+        let _ = _server_handle.join.await;
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
