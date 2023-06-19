@@ -7,6 +7,8 @@ use tracing::{trace, debug, info, warn, error};
 use thrift::protocol::{TCompactInputProtocol, TSerializable};
 use thrift::transport::{TBufferChannel};
 
+use tokio::task::JoinHandle;
+
 use proto::dbproxy::{DbEvent, GetGuidEvent, CreateObjectEvent, UpdateObjectEvent, FindAndModifyEvent, RemoveObjectEvent, GetObjectInfoEvent, GetObjectCountEvent};
 
 use mongo::MongoProxy;
@@ -20,7 +22,8 @@ mod db;
 pub struct DBProxyThriftServer {
     proxy: MongoProxy,
     queue: Queue<Box<db::DBEvent>>,
-    close: Arc<Mutex<CloseHandle>>
+    close_handle: Arc<Mutex<CloseHandle>>,
+    join: Option<JoinHandle<()>>
 }
 
 fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
@@ -39,10 +42,13 @@ impl DBProxyThriftServer {
         let mut _db_server = Arc::new(Mutex::new(DBProxyThriftServer {
             proxy: mongo_proxy,
             queue: _queue,
-            close: _close
+            close_handle: _close,
+            join: None
         }));
+        let mut _s_tmp = _db_server.clone();
+        let mut _s_handle = _s_tmp.as_ref().lock().unwrap();
         let mut _s = _db_server.clone();
-        tokio::spawn( async move {
+        _s_handle.join = Some(tokio::spawn( async move {
             loop {
                 let mut _s_handle = _s.clone();
                 let mut _c_handle = _c.clone();
@@ -53,8 +59,22 @@ impl DBProxyThriftServer {
                     break;
                 }
             }
-        });
+        }));
         Ok(_db_server)
+    }
+
+    pub async fn close(self) {
+        let mut _c_handle = self.close_handle.as_ref().lock().unwrap();
+        _c_handle.close();
+        let _join = self.join;
+        let mut _join_handle = match _join {
+            None => {
+                error!("DBProxyThriftServer close close handle is none!");
+                return;
+            },
+            Some(_j) => _j
+        };
+        let _ = _join_handle.await;
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
