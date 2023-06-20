@@ -77,7 +77,12 @@ impl TcpServer {
                             break;
                         }
                     }
-                });                
+                });  
+
+                let _c_ref = _clone_close.as_ref().lock().unwrap();
+                if _c_ref.is_closed() {
+                    break;
+                }              
             }
         });
 

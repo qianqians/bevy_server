@@ -51,17 +51,9 @@ impl DBProxyThriftServer {
         Ok(_db_server)
     }
 
-    pub async fn close(self) {
+    pub fn close(&mut self) {
         let mut _c_handle = self.close_handle.as_ref().lock().unwrap();
         _c_handle.close();
-        let mut _server_handle = match self.server {
-            None => {
-                error!("DBProxyThriftServer close close handle is none!");
-                return;
-            },
-            Some(_j) => _j
-        };
-        let _ = _server_handle.join.await;
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
