@@ -366,7 +366,7 @@ impl DBProxyHubMsgHandle {
         }
     }
 
-    async fn poll(&mut self) {
+    pub async fn poll(&mut self) {
         loop {
             let opt_ev_data = self.queue.deque();
             match opt_ev_data {

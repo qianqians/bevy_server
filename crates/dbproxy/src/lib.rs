@@ -1,9 +1,11 @@
 use std::sync::{Mutex, Arc};
-use tcp::server::TcpServer;
-use close_handle::CloseHandle;
+use std::thread;
+use std::time::Duration;
 
 use tracing::{trace, debug, info, warn, error};
 
+use tcp::server::TcpServer;
+use close_handle::CloseHandle;
 use mongo::MongoProxy;
 use timer::utc_unix_timer;
 
@@ -37,4 +39,23 @@ impl DBProxyServer {
         let _ = self.server.join.await;
     }
 
+    pub async fn run(&mut self) {
+        loop {
+            let begin = utc_unix_timer();
+            
+            let mut _h = self.handle.as_ref().lock().unwrap();
+            let _ = _h.poll().await;
+        
+            let tick = utc_unix_timer() - begin;
+
+            let _c_ref = self.close.as_ref().lock().unwrap();
+            if _c_ref.is_closed() {
+                break;
+            }
+
+            if tick < 33 {
+                thread::sleep(Duration::from_millis((33 - tick) as u64));
+            }
+        }
+    }
 }
