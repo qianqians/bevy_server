@@ -33,9 +33,12 @@ impl DBProxyServer {
         })
     }
 
-    pub async fn close(self) {
+    pub fn close(&self) {
         let mut _c_handle = self.close.as_ref().lock().unwrap();
         _c_handle.close();
+    }
+
+    pub async fn join(self) {
         let _ = self.server.join.await;
     }
 
