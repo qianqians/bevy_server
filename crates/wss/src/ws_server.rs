@@ -31,30 +31,33 @@ impl WSServer {
                     return;
                 }
 
-                let mut _client = Arc::new(Mutex::new(request.use_protocol("websocket").accept().unwrap()));
+                let mut _client = request.use_protocol("websocket").accept().unwrap();
+                let ip = _client.peer_addr().unwrap();
+                let (mut rd, wr) = _client.split().unwrap();
+                let mut _wr_arc = Arc::new(Mutex::new(wr));
                 let net_rsp:Arc<Mutex<Queue<Vec<u8>>>> = Arc::new(Mutex::new(Queue::new()));
 
                 let _clone_net_rsp = net_rsp.clone();
-                let _clone_client = _client.clone();
+                let _wr_clone = _wr_arc.clone();
                 let _clone_h = _clone_handle.clone();
                 let _clone_c = _clone_close.clone();
                 tokio::spawn(async move {
                     let mut net_pack = NetPack::new();
                     
                     loop {
-                        let mut _client_ref = _client.as_ref().lock().unwrap();
-                        let message = _client_ref.recv_message().unwrap();
+                        let message = rd.recv_message().unwrap();
                         match message {
                             OwnedMessage::Close(_) => {
                                 let message = OwnedMessage::Close(None);
-                                _client_ref.send_message(&message).unwrap();
-                                let ip = _client_ref.peer_addr().unwrap();
+                                let mut wr = _wr_clone.as_ref().lock().unwrap();
+                                wr.send_message(&message).unwrap();
                                 trace!("client {} disconnected", ip);
                                 return;
                             },
                             OwnedMessage::Ping(ping) => {
                                 let message = OwnedMessage::Pong(ping);
-                                _client_ref.send_message(&message).unwrap();
+                                let mut wr = _wr_clone.as_ref().lock().unwrap();
+                                wr.send_message(&message).unwrap();
                             },
                             OwnedMessage::Binary(buf) => {
                                 net_pack.input(&buf[..]);
@@ -94,8 +97,8 @@ impl WSServer {
                             }
                         }
                         let msg = OwnedMessage::Binary(wait_send_data);
-                        let mut _client_ref = _clone_client.as_ref().lock().unwrap();
-                        let _ = _client_ref.send_message(&msg).unwrap();
+                        let mut wr = _wr_arc.as_ref().lock().unwrap();
+                        let _ = wr.send_message(&msg).unwrap();
 
                         let tick = utc_unix_timer() - begin;
 
