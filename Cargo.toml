@@ -10,6 +10,7 @@ bevy = "0.10.0"
 thrift = "0.17.0"
 proto = { path = "crates/proto", version = "0.1.0" }
 dbproxy = { path = "crates/dbproxy", version = "0.1.0" }
+wss = { path = "crates/wss", version = "0.1.0" }
 
 [[bin]]
 name="hub"
