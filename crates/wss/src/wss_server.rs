@@ -17,13 +17,12 @@ use net_pack::NetPack;
 use queue::Queue;
 use close_handle::CloseHandle;
 use timer::utc_unix_timer;
-
-pub struct WssServer{
+pub struct WSSServer{
     pub join: JoinHandle<()>
 }
 
-impl WssServer {
-    pub async fn listen<H: Send + Sync + 'static>(host:String, pfx:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<WssServer, Box<dyn std::error::Error>> {
+impl WSSServer {
+    pub async fn listen<H: Send + Sync + 'static>(host:String, pfx:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<WSSServer, Box<dyn std::error::Error>> {
         let mut file = File::open(pfx).unwrap();
         let mut pkcs12 = vec![];
         file.read_to_end(&mut pkcs12).unwrap();
@@ -125,7 +124,7 @@ impl WssServer {
             }
         });
 
-        Ok(WssServer {
+        Ok(WSSServer {
             join: _join
         })
     }

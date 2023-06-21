@@ -15,12 +15,12 @@ use queue::Queue;
 use close_handle::CloseHandle;
 use timer::utc_unix_timer;
 
-pub struct WssServer{
+pub struct WSServer{
     pub join: JoinHandle<()>
 }
 
-impl WssServer {
-    pub async fn listen<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<WssServer, Box<dyn std::error::Error>> {
+impl WSServer {
+    pub async fn listen<H: Send + Sync + 'static>(host:String, f:fn(_handle: Arc<Mutex<H>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data:Vec<u8>), _handle: Arc<Mutex<H>>, _close: Arc<Mutex<CloseHandle>>) -> Result<WSServer, Box<dyn std::error::Error>> {
         let server = Server::bind(host)?;
         let _clone_handle = _handle.clone();
         let _clone_close = _close.clone();
@@ -117,7 +117,7 @@ impl WssServer {
             }
         });
 
-        Ok(WssServer {
+        Ok(WSServer {
             join: _join
         })
     }
