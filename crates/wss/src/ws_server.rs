@@ -16,7 +16,7 @@ use close_handle::CloseHandle;
 use timer::utc_unix_timer;
 
 pub struct WSServer{
-    pub join: JoinHandle<()>
+    join: JoinHandle<()>
 }
 
 impl WSServer {
@@ -124,4 +124,9 @@ impl WSServer {
             join: _join
         })
     }
+
+    pub async fn join(self) {
+        let _ = self.join.await;
+    }
+
 }

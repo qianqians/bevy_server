@@ -39,7 +39,7 @@ impl DBProxyServer {
     }
 
     pub async fn join(self) {
-        let _ = self.server.join.await;
+        let _ = self.server.join().await;
     }
 
     pub async fn run(&mut self) {

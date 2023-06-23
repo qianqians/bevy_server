@@ -111,7 +111,7 @@ impl MongoProxy {
         let _query = mongodb::bson::Document::from_reader(&mut _query_bin)?;
         
         let ascending = if _ascending { 1 } else { -1 };
-        let _opts = FindOptions::builder().sort(doc! { sort: ascending }).build();
+        let _opts = FindOptions::builder().sort(doc! { sort: ascending }).skip(skip as u64).limit(limit as i64).build();
         let mut _cursor = _collection.find(_query, _opts).await?;
         let vec: Vec<_> = _cursor.try_collect().await?;
         Ok(vec)

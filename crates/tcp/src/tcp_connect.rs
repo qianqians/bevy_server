@@ -15,7 +15,7 @@ use close_handle::CloseHandle;
 use timer::utc_unix_timer;
 
 pub struct TcpConnect {
-    pub join: JoinHandle<()>
+    join: JoinHandle<()>
 }
 
 impl TcpConnect {
@@ -59,7 +59,7 @@ impl TcpConnect {
             }
         });
 
-        let _join = tokio::spawn(async move {
+        let _ = tokio::spawn(async move {
             loop {
                 let begin = utc_unix_timer();
 
@@ -93,4 +93,9 @@ impl TcpConnect {
             join: _join
         })
     }
+
+    pub async fn join(self) {
+        let _ = self.join.await;
+    }
+
 }

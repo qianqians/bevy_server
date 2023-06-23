@@ -22,17 +22,3 @@ impl <T> Queue<T> {
         que.pop_back()
     }
 }
-
-struct TestStruct {
-    i: i32,
-    str: String
-}
-
-fn test() {
-    let mut p = Queue::<TestStruct>::new();
-    p.enque(TestStruct{
-        i: 1,
-        str: "qianqians".to_string()
-    });
-    let _ = p.deque();
-}
