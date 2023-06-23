@@ -8,10 +8,19 @@ edition = "2021"
 [dependencies]
 bevy = "0.10.0"
 thrift = "0.17.0"
+serde = "1.0.163"
+serde_json = "1.0.96"
+tracing = "0.1.37"
 proto = { path = "crates/proto", version = "0.1.0" }
 dbproxy = { path = "crates/dbproxy", version = "0.1.0" }
 wss = { path = "crates/wss", version = "0.1.0" }
+config = { path = "crates/config", version = "0.1.0" }
+log = { path = "crates/log", version = "0.1.0" }
 
 [[bin]]
 name="hub"
 path="./src/hub_main.rs"
+
+[[bin]]
+name="dbproxy"
+path="./src/dbproxy_main.rs"
