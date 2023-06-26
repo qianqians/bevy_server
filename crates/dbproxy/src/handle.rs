@@ -1,6 +1,6 @@
 use std::sync::{Mutex, Arc};
 
-use tracing::{error};
+use tracing::{trace, error};
 
 use thrift::protocol::{TCompactInputProtocol, TSerializable};
 use thrift::transport::{TBufferChannel};
@@ -19,6 +19,7 @@ pub struct DBProxyHubMsgHandle {
 }
 
 fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
+    trace!("deserialize begin!");
     let mut t = TBufferChannel::with_capacity(data.len(), 0);
     let _ = t.set_readable_bytes(&data);
     let mut i_prot = TCompactInputProtocol::new(t);
@@ -39,6 +40,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_get_guid begin!");
+
         let ev_data = db::DBEvGetGuid::new();
         let db = match _data.db {
             None => {
@@ -66,6 +69,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_create_object(&mut self, _data: CreateObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_create_object begin!");
+
         let object_info = match _data.object_info {
             None => {
                 error!("DBProxyThriftServer do_event CreateObjectEvent object_info is None!");
@@ -100,6 +105,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_update_object(&mut self, _data: UpdateObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_update_object begin!");
+
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event UpdateObjectEvent object_info is None!");
@@ -148,6 +155,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_find_and_modify(&mut self, _data: FindAndModifyEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_find_and_modify begin!");
+
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event FindAndModifyEvent query_info is None!");
@@ -203,6 +212,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_remove_object(&mut self, _data: RemoveObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_remove_object begin!");
+
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event RemoveObjectEvent query_info is None!");
@@ -237,6 +248,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_get_object_info(&mut self, _data: GetObjectInfoEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_get_object_info begin!");
+
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectInfoEvent query_info is None!");
@@ -299,6 +312,8 @@ impl DBProxyHubMsgHandle {
     }
 
     fn do_get_object_count(&mut self, _data: GetObjectCountEvent, rsp: Arc<Mutex<TcpWriter>>) {
+        trace!("do_get_object_count begin!");
+
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectCountEvent query_info is None!");
@@ -333,6 +348,8 @@ impl DBProxyHubMsgHandle {
     }
 
     pub fn do_event(_handle: Arc<Mutex<DBProxyHubMsgHandle>>, rsp: Arc<Mutex<TcpWriter>>, data: Vec<u8>) {
+        trace!("do_event begin!");
+
         let mut _p = _handle.as_ref().lock().unwrap();
         let ev = match deserialize(data) {
             Err(e) => {

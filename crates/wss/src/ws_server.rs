@@ -2,12 +2,12 @@ use std::sync::{Mutex, Arc};
 use std::marker::{Send, Sync};
 
 use tokio::task::JoinHandle;
-
 use websocket::sync::{Server};
+use tracing::{trace, error};
 
 use close_handle::CloseHandle;
 
-use crate::wss_socket::{WSReader, WSWriter};
+use crate::ws_socket::{WSReader, WSWriter};
 
 pub struct WSServer{
     join: JoinHandle<()>
@@ -20,10 +20,13 @@ impl WSServer {
             for request in server.filter_map(Result::ok) {
                 if !request.protocols().contains(&"websocket".to_string()) {
                     request.reject().unwrap();
+                    error!("ws protocol wrong!");
                     return;
                 }
 
                 let mut _client = request.use_protocol("websocket").accept().unwrap();
+                trace!("ws accept client ip:{}", _client.peer_addr().unwrap());
+
                 let ip = _client.peer_addr().unwrap();
                 let (rd, wr) = _client.split().unwrap();
                 let mut _wr_arc = Arc::new(Mutex::new(wr));

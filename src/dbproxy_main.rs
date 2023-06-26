@@ -2,7 +2,7 @@ use std::env;
 
 use serde::{Deserialize, Serialize};
 
-use tracing::{error};
+use tracing::{info, error};
 
 use config::{load_data_from_file, load_cfg_from_data};
 use log;
@@ -19,6 +19,8 @@ struct DBProxyCfg {
 
 #[tokio::main]
 async fn main() {
+    info!("dbproxy start!");
+
     let args: Vec<String> = env::args().collect();
     let cfg_file = &args[0];
 
@@ -49,4 +51,6 @@ async fn main() {
 
     server.run().await;
     server.join().await;
+
+    info!("dbproxy exit!");
 }

@@ -2,8 +2,9 @@ use std::sync::{Mutex, Arc};
 use std::thread;
 use std::time::Duration;
 
-use net::NetReader;
+use tracing::{info};
 
+use net::NetReader;
 use tcp::tcp_server::TcpServer;
 use tcp::tcp_socket::{TcpReader, TcpWriter};
 use close_handle::CloseHandle;
@@ -41,15 +42,21 @@ impl DBProxyServer {
     }
 
     pub fn close(&self) {
+        info!("start close!");
+
         let mut _c_handle = self.close.as_ref().lock().unwrap();
         _c_handle.close();
     }
 
     pub async fn join(self) {
+        info!("await work done!");
+
         let _ = self.server.join().await;
 
         let mut _h = self.handle.as_ref().lock().unwrap();
         let _ = _h.poll().await;
+
+        info!("work done!");
     }
 
     pub async fn run(&mut self) {

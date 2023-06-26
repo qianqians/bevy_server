@@ -4,8 +4,7 @@ use std::marker::{Send, Sync};
 use tokio::io::{self};
 use tokio::net::TcpListener;
 use tokio::task::JoinHandle;
-
-use tracing::{error};
+use tracing::{trace, error};
 
 use close_handle::CloseHandle;
 
@@ -29,6 +28,8 @@ impl TcpServer {
                     },
                     Ok(_s) => _s
                 };
+
+                trace!("tcp accept client ip:{:?}", socket.peer_addr());
 
                 let _clone_h = _handle.clone();
                 let _clone_c = _clone_close.clone();

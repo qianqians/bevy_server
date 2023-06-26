@@ -4,9 +4,9 @@ use std::fs::File;
 use std::io::Read;
 
 use tokio::task::JoinHandle;
-
 use websocket::sync::{Server};
 use websocket::native_tls::{Identity, TlsAcceptor};
+use tracing::{trace, error};
 
 use close_handle::CloseHandle;
 
@@ -30,14 +30,18 @@ impl WSSServer {
             for request in server.filter_map(Result::ok) {
                 if !request.protocols().contains(&"websocket".to_string()) {
                     request.reject().unwrap();
+                    error!("wss protocol wrong!");
                     return;
                 }
 
-                let mut _client = Arc::new(Mutex::new(request.use_protocol("websocket").accept().unwrap()));
-                let _clone_client = _client.clone();
+                let mut _client = request.use_protocol("websocket").accept().unwrap();
+                trace!("wss accept client ip:{}", _client.peer_addr().unwrap());
+
+                let _client_arc = Arc::new(Mutex::new(_client));
+                let _clone_client = _client_arc.clone();
                 let _clone_h = _clone_handle.clone();
                 let _clone_c = _clone_close.clone();
-                f(_clone_h, _clone_c, WSSReader::new(_client), WSSWriter::new(_clone_client));
+                f(_clone_h, _clone_c, WSSReader::new(_client_arc), WSSWriter::new(_clone_client));
 
                 let _c_ref = _clone_close.as_ref().lock().unwrap();
                 if _c_ref.is_closed() {
