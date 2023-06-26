@@ -16,6 +16,6 @@ proto = { path = "../proto", version = "0.1.0" }
 queue = { path = "../queue", version = "0.1.0" }
 timer = { path = "../timer", version = "0.1.0" }
 log = { path = "../log", version = "0.1.0" }
-net_pack = { path = "../net_pack", version = "0.1.0" }
+net = { path = "../net", version = "0.1.0" }
 tcp = { path = "../tcp", version = "0.1.0" }
 close_handle = { path = "../close_handle", version = "0.1.0" }

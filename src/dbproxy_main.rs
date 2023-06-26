@@ -2,7 +2,7 @@ use std::env;
 
 use serde::{Deserialize, Serialize};
 
-use tracing::{trace, debug, info, warn, error};
+use tracing::{error};
 
 use config::{load_data_from_file, load_cfg_from_data};
 use log;

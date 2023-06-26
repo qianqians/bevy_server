@@ -2,16 +2,17 @@ use std::any::Any;
 use std::cmp;
 use std::sync::{Mutex, Arc};
 
-use thrift::protocol::{TOutputProtocol, TCompactOutputProtocol, TSerializable};
+use net::NetWriter;
+use thrift::protocol::{TCompactOutputProtocol, TSerializable};
 use thrift::transport::{TIoChannel, TBufferChannel};
 
-use tracing::{trace, debug, info, warn, error};
+use tracing::{trace, error};
 use mongodb::bson::{doc, Document};
 
 use proto::hub::{DbCallback, AckGetGuid, AckCreateObject, AckUpdataObject, AckFindAndModify, AckRemoveObject, AckGetObjectCount, AckGetObjectInfo, AckGetObjectInfoEnd};
 
 use mongo::MongoProxy;
-use queue::Queue;
+use tcp::tcp_socket::{TcpWriter};
 
 pub enum DBEventType {
     EvGetGuid,
@@ -123,7 +124,7 @@ impl DBEvGetObjectCount {
 }
 
 pub struct DBEvent {
-    pub send_proxy: Arc<Mutex<Queue<Vec<u8>>>>,
+    pub send_proxy: Arc<Mutex<TcpWriter>>,
     pub ev_type: DBEventType,
     pub db: String,
     pub collection: String,
@@ -134,7 +135,7 @@ pub struct DBEvent {
 unsafe impl Send for DBEvent {}
 
 impl DBEvent {
-    pub fn new(_send_proxy: Arc<Mutex<Queue<Vec<u8>>>>, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
+    pub fn new(_send_proxy: Arc<Mutex<TcpWriter>>, _ev_type: DBEventType, _db: String, _collection: String,  _callback_id: String, _ev_data: Box<dyn Any>) -> DBEvent {
         DBEvent {
             send_proxy: _send_proxy,
             ev_type: _ev_type,
@@ -161,7 +162,7 @@ impl DBEvent {
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let tmp = rd.write_bytes();
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(tmp);
+        let _ = p_send.send(&tmp);
     }
 
     async fn do_create_object(&mut self, mongo_proxy:&mut MongoProxy){
@@ -187,7 +188,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     async fn do_updata_object(&mut self, mongo_proxy:&mut MongoProxy) {
@@ -213,7 +214,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     async fn do_find_and_modify(&mut self, mongo_proxy:&mut MongoProxy) {
@@ -253,7 +254,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     async fn do_remove_object(&mut self, mongo_proxy:&mut MongoProxy) {
@@ -279,7 +280,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     async fn do_get_object_info(&mut self, mongo_proxy:&mut MongoProxy) {
@@ -321,7 +322,7 @@ impl DBEvent {
             };
             let mut o_prot = TCompactOutputProtocol::new(wr);
             let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-            let _ = p_send.enque(rd.write_bytes());
+            let _ = p_send.send(&rd.write_bytes());
         }
         let cb = DbCallback::GetObjectInfoEnd(AckGetObjectInfoEnd::new(self.callback_id.to_string()));
         let t = TBufferChannel::with_capacity(0, 1024);
@@ -334,7 +335,7 @@ impl DBEvent {
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     async fn do_get_object_count(&mut self, mongo_proxy:&mut MongoProxy) {
@@ -360,7 +361,7 @@ impl DBEvent {
         let mut o_prot = TCompactOutputProtocol::new(wr);
         let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
         let mut p_send = self.send_proxy.as_ref().lock().unwrap();
-        let _ = p_send.enque(rd.write_bytes());
+        let _ = p_send.send(&rd.write_bytes());
     }
 
     pub async fn do_event(&mut self, mongo_proxy:&mut MongoProxy) {

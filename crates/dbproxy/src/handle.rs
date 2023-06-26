@@ -1,6 +1,6 @@
 use std::sync::{Mutex, Arc};
 
-use tracing::{trace, debug, info, warn, error};
+use tracing::{error};
 
 use thrift::protocol::{TCompactInputProtocol, TSerializable};
 use thrift::transport::{TBufferChannel};
@@ -9,6 +9,7 @@ use proto::dbproxy::{DbEvent, GetGuidEvent, CreateObjectEvent, UpdateObjectEvent
 
 use mongo::MongoProxy;
 use queue::Queue;
+use tcp::tcp_socket::{TcpWriter};
 
 use crate::db;
 
@@ -37,7 +38,7 @@ impl DBProxyHubMsgHandle {
         Ok(_db_server)
     }
 
-    fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_get_guid(&mut self, _data: GetGuidEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let ev_data = db::DBEvGetGuid::new();
         let db = match _data.db {
             None => {
@@ -64,7 +65,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_create_object(&mut self, _data: CreateObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_create_object(&mut self, _data: CreateObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let object_info = match _data.object_info {
             None => {
                 error!("DBProxyThriftServer do_event CreateObjectEvent object_info is None!");
@@ -98,7 +99,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_update_object(&mut self, _data: UpdateObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_update_object(&mut self, _data: UpdateObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event UpdateObjectEvent object_info is None!");
@@ -146,7 +147,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_find_and_modify(&mut self, _data: FindAndModifyEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_find_and_modify(&mut self, _data: FindAndModifyEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event FindAndModifyEvent query_info is None!");
@@ -201,7 +202,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_remove_object(&mut self, _data: RemoveObjectEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_remove_object(&mut self, _data: RemoveObjectEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event RemoveObjectEvent query_info is None!");
@@ -235,7 +236,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_get_object_info(&mut self, _data: GetObjectInfoEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_get_object_info(&mut self, _data: GetObjectInfoEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectInfoEvent query_info is None!");
@@ -297,7 +298,7 @@ impl DBProxyHubMsgHandle {
         self.queue.enque(Box::new(ev));
     }
 
-    fn do_get_object_count(&mut self, _data: GetObjectCountEvent, rsp: Arc<Mutex<Queue<Vec<u8>>>>) {
+    fn do_get_object_count(&mut self, _data: GetObjectCountEvent, rsp: Arc<Mutex<TcpWriter>>) {
         let query_info = match _data.query_info {
             None => {
                 error!("DBProxyThriftServer do_event GetObjectCountEvent query_info is None!");
@@ -327,11 +328,11 @@ impl DBProxyHubMsgHandle {
             },
             Some(_callback_id) => _callback_id
         };
-        let ev = db::DBEvent::new(rsp, db::DBEventType::EvGetGuid, db, collection, callback_id, Box::new(ev_data));
+        let ev = db::DBEvent::new(rsp, db::DBEventType::EvGetObjectCount, db, collection, callback_id, Box::new(ev_data));
         self.queue.enque(Box::new(ev));
     }
 
-    pub fn do_event(_handle: Arc<Mutex<DBProxyHubMsgHandle>>, rsp: Arc<Mutex<Queue<Vec<u8>>>>, data: Vec<u8>) {
+    pub fn do_event(_handle: Arc<Mutex<DBProxyHubMsgHandle>>, rsp: Arc<Mutex<TcpWriter>>, data: Vec<u8>) {
         let mut _p = _handle.as_ref().lock().unwrap();
         let ev = match deserialize(data) {
             Err(e) => {

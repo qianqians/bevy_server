@@ -2,9 +2,10 @@ use std::sync::{Mutex, Arc};
 use std::thread;
 use std::time::Duration;
 
-use tracing::{trace, debug, info, warn, error};
+use net::NetReader;
 
 use tcp::tcp_server::TcpServer;
+use tcp::tcp_socket::{TcpReader, TcpWriter};
 use close_handle::CloseHandle;
 use mongo::MongoProxy;
 use timer::utc_unix_timer;
@@ -12,8 +13,10 @@ use timer::utc_unix_timer;
 mod db;
 mod handle;
 
+use crate::handle::DBProxyHubMsgHandle;
+
 pub struct DBProxyServer {
-    handle: Arc<Mutex<handle::DBProxyHubMsgHandle>>,
+    handle: Arc<Mutex<DBProxyHubMsgHandle>>,
     close: Arc<Mutex<CloseHandle>>,
     server: TcpServer
 }
@@ -21,16 +24,20 @@ pub struct DBProxyServer {
 impl DBProxyServer {
     pub async fn new(mongo_url:String, host:String) -> Result<DBProxyServer, Box<dyn std::error::Error>> {
         let _mongo = MongoProxy::new(mongo_url).await?;
-        let _handle = handle::DBProxyHubMsgHandle::new(_mongo).await?;
+        let _handle = DBProxyHubMsgHandle::new(_mongo).await?;
         let mut _close = Arc::new(Mutex::new(CloseHandle::new()));
-        let mut _s = _handle.clone();
+        let mut _h = _handle.clone();
         let _c = _close.clone();
-        let _tcp_s = TcpServer::listen(host, handle::DBProxyHubMsgHandle::do_event, _s, _c).await?;
+        let _tcp_s = TcpServer::listen(host, DBProxyServer::do_accept, _h, _c).await?;
         Ok(DBProxyServer {
             handle: _handle,
             close: _close,
             server: _tcp_s
         })
+    }
+
+    fn do_accept(_h: Arc<Mutex<DBProxyHubMsgHandle>>, _c: Arc<Mutex<CloseHandle>>, rd: TcpReader, wr: TcpWriter) {
+        rd.start(DBProxyHubMsgHandle::do_event, _h, Arc::new(Mutex::new(wr)), _c);
     }
 
     pub fn close(&self) {
