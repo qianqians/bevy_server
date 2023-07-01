@@ -1,16 +1,21 @@
 use std::env;
 
 use serde::{Deserialize, Serialize};
-
 use tracing::{info, error};
+use uuid::Uuid;
+use consulrs::api::check::common::AgentServiceCheckBuilder;
+use consulrs::api::service::requests::RegisterServiceRequest;
 
 use config::{load_data_from_file, load_cfg_from_data};
-use log;
 use dbproxy::DBProxyServer;
 use health::HealthHandle;
+use consul::ConsulImpl;
+use local_ip::get_local_ip;
+use log;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct DBProxyCfg {
+    consul_url: String,
     service_port: u16,
     health_port: u16,
     mongo_url: String,
@@ -42,7 +47,8 @@ async fn main() {
     };
     log::init(cfg.log_level, cfg.log_dir, cfg.log_file);
 
-    let health_host = format!("0.0.0.0:{}", cfg.health_port);
+    let health_port = cfg.health_port;
+    let health_host = format!("0.0.0.0:{}", health_port);
     let health_handle = HealthHandle::new(health_host).await;
 
     let host = format!("0.0.0.0:{}", cfg.service_port);
@@ -53,6 +59,25 @@ async fn main() {
         },
         Ok(_s) => _s
     };
+
+    let _name = format!("dbproxy_{}", Uuid::new_v4());
+    let _local_ip = get_local_ip();
+    let _health_host = format!("http://{_local_ip}:{health_port}/health");
+    let mut consul_impl = ConsulImpl::new(cfg.consul_url);
+    consul_impl.register(_name, Some(
+        RegisterServiceRequest::builder()
+            .address(_local_ip)
+            .port(cfg.service_port)
+            .check(AgentServiceCheckBuilder::default()
+                .name("health_check")
+                .interval("10s")
+                .http(_health_host)
+                .status("passing")
+                .build()
+                .unwrap()
+            ),
+        ),
+    ).await;
 
     server.run().await;
     server.join().await;

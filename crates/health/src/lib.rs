@@ -1,10 +1,12 @@
 use std::sync::{Arc, Mutex};
+
 use axum::{
     routing::get,
     http::StatusCode,
     extract::State,
     Router,
 };
+use tracing::{info};
 
 pub struct HealthHandle {
     status: bool
@@ -14,10 +16,12 @@ impl HealthHandle {
     async fn health_handle(State(state): State<Arc<Mutex<HealthHandle>>>) -> (StatusCode, &'static str) {
         let s = state.as_ref().lock().unwrap();
         if s.status {
-            (StatusCode::OK, "ok!")
+            info!("health state passing!");
+            (StatusCode::OK, "passing!")
         }
         else {
-            (StatusCode::INTERNAL_SERVER_ERROR, "err!")
+            info!("health state busy!");
+            (StatusCode::INTERNAL_SERVER_ERROR, "busy!")
         }
     }
 
