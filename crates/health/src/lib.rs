@@ -7,7 +7,7 @@ use axum::{
 };
 
 pub struct HealthHandle {
-    pub status: bool
+    status: bool
 }
 
 impl HealthHandle {
