@@ -7,10 +7,12 @@ use tracing::{info, error};
 use config::{load_data_from_file, load_cfg_from_data};
 use log;
 use dbproxy::DBProxyServer;
+use health::HealthHandle;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct DBProxyCfg {
-    port: u16,
+    service_port: u16,
+    health_port: u16,
     mongo_url: String,
     log_level: String,
     log_file: String,
@@ -40,8 +42,11 @@ async fn main() {
     };
     log::init(cfg.log_level, cfg.log_dir, cfg.log_file);
 
-    let host = format!("0.0.0.0:{}", cfg.port);
-    let mut server = match DBProxyServer::new(cfg.mongo_url, host).await {
+    let health_host = format!("0.0.0.0:{}", cfg.health_port);
+    let health_handle = HealthHandle::new(health_host).await;
+
+    let host = format!("0.0.0.0:{}", cfg.service_port);
+    let mut server = match DBProxyServer::new(cfg.mongo_url, host, health_handle).await {
         Err(e) => {
             error!("DBProxy DBProxyServer new faild {}!", e);
             return;

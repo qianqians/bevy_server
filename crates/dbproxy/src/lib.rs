@@ -9,6 +9,7 @@ use tcp::tcp_server::TcpServer;
 use tcp::tcp_socket::{TcpReader, TcpWriter};
 use close_handle::CloseHandle;
 use mongo::MongoProxy;
+use health::HealthHandle;
 use timer::utc_unix_timer;
 
 mod db;
@@ -18,12 +19,13 @@ use crate::handle::DBProxyHubMsgHandle;
 
 pub struct DBProxyServer {
     handle: Arc<Mutex<DBProxyHubMsgHandle>>,
+    health: Arc<Mutex<HealthHandle>>,
     close: Arc<Mutex<CloseHandle>>,
     server: TcpServer
 }
 
 impl DBProxyServer {
-    pub async fn new(mongo_url:String, host:String) -> Result<DBProxyServer, Box<dyn std::error::Error>> {
+    pub async fn new(mongo_url:String, host:String, health_handle: Arc<Mutex<HealthHandle>>) -> Result<DBProxyServer, Box<dyn std::error::Error>> {
         let _mongo = MongoProxy::new(mongo_url).await?;
         let _handle = DBProxyHubMsgHandle::new(_mongo).await?;
         let mut _close = Arc::new(Mutex::new(CloseHandle::new()));
@@ -32,6 +34,7 @@ impl DBProxyServer {
         let _tcp_s = TcpServer::listen(host, DBProxyServer::do_accept, _h, _c).await?;
         Ok(DBProxyServer {
             handle: _handle,
+            health: health_handle,
             close: _close,
             server: _tcp_s
         })
@@ -75,6 +78,12 @@ impl DBProxyServer {
 
             if tick < 33 {
                 thread::sleep(Duration::from_millis((33 - tick) as u64));
+                let mut _health = self.health.as_ref().lock().unwrap();
+                _health.set_health_status(true);
+            }
+            else if tick > 256 {
+                let mut _health = self.health.as_ref().lock().unwrap();
+                _health.set_health_status(false);
             }
         }
     }

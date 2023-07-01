@@ -17,6 +17,7 @@ dbproxy = { path = "crates/dbproxy", version = "0.1.0" }
 wss = { path = "crates/wss", version = "0.1.0" }
 config = { path = "crates/config", version = "0.1.0" }
 log = { path = "crates/log", version = "0.1.0" }
+health = { path = "crates/health", version = "0.1.0" }
 
 [[bin]]
 name="hub"
