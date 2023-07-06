@@ -21,13 +21,11 @@ pub fn init(filter: String, log_dir: String, log_file: String, jaeger_url: Optio
         let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
 
         let file_layer = fmt::layer().with_ansi(false).with_writer(non_blocking_appender);
-        let reg = tracing_subscriber::registry();
-        reg.with(env_filter).with(telemetry).with(file_layer).init();
+        tracing_subscriber::registry().with(env_filter).with(telemetry).with(file_layer).init();
     }
     else{
         let file_layer = fmt::layer().with_ansi(false).with_writer(non_blocking_appender);
-        let reg = tracing_subscriber::registry();
-        reg.with(env_filter).with(file_layer).init();
+        tracing_subscriber::registry().with(env_filter).with(file_layer).init();
     }
 
     return true
