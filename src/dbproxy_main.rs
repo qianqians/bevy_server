@@ -19,6 +19,7 @@ struct DBProxyCfg {
     service_port: u16,
     health_port: u16,
     mongo_url: String,
+    jaeger_url: Option<String>,
     log_level: String,
     log_file: String,
     log_dir: String
@@ -28,9 +29,10 @@ struct DBProxyCfg {
 async fn main() {
     info!("dbproxy start!");
 
+    let _name = format!("dbproxy_{}", Uuid::new_v4());
+
     let args: Vec<String> = env::args().collect();
     let cfg_file = &args[0];
-
     let cfg_data = match load_data_from_file(cfg_file.to_string()) {
         Err(e) => {
             error!("DBProxy load_data_from_file faild {}, {}!", cfg_file, e);
@@ -45,7 +47,9 @@ async fn main() {
         },
         Ok(_cfg) => _cfg
     };
-    log::init(cfg.log_level, cfg.log_dir, cfg.log_file);
+
+    let _s_name = _name.clone();
+    log::init(cfg.log_level, cfg.log_dir, cfg.log_file, cfg.jaeger_url, Some(_s_name));
 
     let health_port = cfg.health_port;
     let health_host = format!("0.0.0.0:{}", health_port);
@@ -60,7 +64,6 @@ async fn main() {
         Ok(_s) => _s
     };
 
-    let _name = format!("dbproxy_{}", Uuid::new_v4());
     let _local_ip = get_local_ip();
     let _health_host = format!("http://{_local_ip}:{health_port}/health");
     let mut consul_impl = ConsulImpl::new(cfg.consul_url);
