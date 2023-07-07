@@ -97,9 +97,16 @@ impl WSWriter {
 
 #[async_trait]
 impl NetWriter for WSWriter {
-    async fn send(&mut self, buf: &[u8]) {
+    async fn send(&mut self, buf: &[u8]) -> bool {
         let mut wr = self.wr.as_ref().lock().unwrap();
         let msg = OwnedMessage::Binary(buf.to_vec());
-        let _ = wr.send_message(&msg).unwrap();
+        match wr.send_message(&msg) {
+            Err(_) => {
+                return false;
+            },
+            Ok(_) => {
+                return true;
+            }
+        }
     }
 }

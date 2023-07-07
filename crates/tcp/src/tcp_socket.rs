@@ -85,7 +85,14 @@ impl TcpWriter {
 
 #[async_trait]
 impl NetWriter for TcpWriter {
-    async fn send(&mut self, buf: &[u8]) {
-        let _ = self.wr.write_all(buf).await;
+    async fn send(&mut self, buf: &[u8]) -> bool {
+        match self.wr.write_all(buf).await {
+            Err(_) => {
+                return false;
+            },
+            Ok(_) => {
+                return true;
+            }
+        }
     }
 }

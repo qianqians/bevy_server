@@ -7,7 +7,7 @@ use close_handle::CloseHandle;
 
 #[async_trait]
 pub trait NetWriter {
-    async fn send(&mut self, buf: &[u8]);
+    async fn send(&mut self, buf: &[u8]) -> bool;
 }
 
 #[async_trait]
