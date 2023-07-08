@@ -29,3 +29,18 @@ struct call_rsp {
 struct call_err {
 	1:common.rpc_err err
 }
+
+/*
+ * hub send ntf msg to client.
+ */
+struct call_ntf {
+	1:common.msg message
+}
+
+union client_service {
+	1:create_remote_entity create_remote_entity,
+	2:call_rpc call_rpc,
+	3:call_rsp call_rsp,
+	4:call_err call_err,
+	5:call_ntf call_ntf
+}

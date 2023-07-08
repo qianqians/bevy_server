@@ -37,21 +37,31 @@ struct create_remote_entity {
  * hub send rpc msg to client.
  */
 struct hub_call_client_rpc {
-	1:common.msg message
+	1:string conn_id,
+	2:common.msg message
 }
 
 /*
  * hub send rsp to client.
  */
 struct hub_call_client_rsp {
-	1:common.rpc_rsp rsp
+	1:string conn_id,
+	2:common.rpc_rsp rsp
 }
 
 /*
  * hub send err to client.
  */
 struct hub_call_client_err {
-	1:common.rpc_err err
+	1:string conn_id,
+	2:common.rpc_err err
+}
+
+/*
+ * hub send ntf msg to client.
+ */
+struct hub_call_client_ntf {
+	1:common.msg message
 }
 
 /*
@@ -81,8 +91,9 @@ union gate_hub_service {
 	5:hub_call_client_rpc call_rpc,
 	6:hub_call_client_rsp call_rsp,
 	7:hub_call_client_err call_err,
-	8:hub_call_client_group call_group,
-	9:hub_call_client_global call_global
+	8:hub_call_client_ntf call_ntf,
+	9:hub_call_client_group call_group,
+	10:hub_call_client_global call_global
 }
 
 /*

@@ -9,7 +9,17 @@ use thrift::transport::{TIoChannel, TBufferChannel};
 use tracing::{trace, error};
 use mongodb::bson::{doc, Document};
 
-use proto::hub::{DbCallback, AckGetGuid, AckCreateObject, AckUpdataObject, AckFindAndModify, AckRemoveObject, AckGetObjectCount, AckGetObjectInfo, AckGetObjectInfoEnd};
+use proto::hub::{
+    DbCallback, 
+    AckGetGuid, 
+    AckCreateObject, 
+    AckUpdataObject, 
+    AckFindAndModify, 
+    AckRemoveObject, 
+    AckGetObjectCount, 
+    AckGetObjectInfo, 
+    AckGetObjectInfoEnd
+};
 
 use mongo::MongoProxy;
 use tcp::tcp_socket::{TcpWriter};

@@ -269,3 +269,185 @@ impl TSerializable for CallErr {
   }
 }
 
+//
+// CallNtf
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallNtf {
+  pub message: Option<common::Msg>,
+}
+
+impl CallNtf {
+  pub fn new<F1>(message: F1) -> CallNtf where F1: Into<Option<common::Msg>> {
+    CallNtf {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallNtf {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallNtf> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallNtf {
+      message: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_ntf");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// ClientService
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum ClientService {
+  CreateRemoteEntity(CreateRemoteEntity),
+  CallRpc(CallRpc),
+  CallRsp(CallRsp),
+  CallErr(CallErr),
+  CallNtf(CallNtf),
+}
+
+impl TSerializable for ClientService {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientService> {
+    let mut ret: Option<ClientService> = None;
+    let mut received_field_count = 0;
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = CreateRemoteEntity::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CreateRemoteEntity(val));
+          }
+          received_field_count += 1;
+        },
+        2 => {
+          let val = CallRpc::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CallRpc(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
+          let val = CallRsp::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CallRsp(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
+          let val = CallErr::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CallErr(val));
+          }
+          received_field_count += 1;
+        },
+        5 => {
+          let val = CallNtf::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CallNtf(val));
+          }
+          received_field_count += 1;
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+          received_field_count += 1;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    if received_field_count == 0 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received empty union from remote ClientService"
+          )
+        )
+      )
+    } else if received_field_count > 1 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received multiple fields for union from remote ClientService"
+          )
+        )
+      )
+    } else {
+      Ok(ret.expect("return value should have been constructed"))
+    }
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("client_service");
+    o_prot.write_struct_begin(&struct_ident)?;
+    match *self {
+      ClientService::CreateRemoteEntity(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("create_remote_entity", TType::Struct, 1))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::CallRpc(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::CallRsp(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::CallErr(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 4))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::CallNtf(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 5))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
