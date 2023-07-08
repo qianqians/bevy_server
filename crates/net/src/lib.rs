@@ -10,7 +10,6 @@ pub trait NetWriter {
     async fn send(&mut self, buf: &[u8]) -> bool;
 }
 
-#[async_trait]
 pub trait NetReader {
     fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, c: Arc<Mutex<CloseHandle>>);
 }

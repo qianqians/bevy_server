@@ -22,6 +22,7 @@ log = { path = "crates/log", version = "0.1.0" }
 health = { path = "crates/health", version = "0.1.0" }
 consul = { path = "crates/consul", version = "0.1.0" }
 local_ip = { path = "crates/local_ip", version = "0.1.0" }
+gate_service = { path = "crates/gate_service", version = "0.1.0" }
 
 [[bin]]
 name="hub"
