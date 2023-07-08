@@ -27,7 +27,7 @@ pub struct DBProxyServer {
 impl DBProxyServer {
     pub async fn new(mongo_url:String, host:String, health_handle: Arc<Mutex<HealthHandle>>) -> Result<DBProxyServer, Box<dyn std::error::Error>> {
         let _mongo = MongoProxy::new(mongo_url).await?;
-        let _handle = DBProxyHubMsgHandle::new(_mongo).await?;
+        let _handle = DBProxyHubMsgHandle::new(_mongo)?;
         let mut _close = Arc::new(Mutex::new(CloseHandle::new()));
         let mut _h = _handle.clone();
         let _c = _close.clone();

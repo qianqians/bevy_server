@@ -28,7 +28,7 @@ fn deserialize(data: Vec<u8>) -> Result<DbEvent, Box<dyn std::error::Error>> {
 }
 
 impl DBProxyHubMsgHandle {
-    pub async fn new(mongo_proxy:MongoProxy) -> Result<Arc<Mutex<DBProxyHubMsgHandle>>, Box<dyn std::error::Error>> {
+    pub fn new(mongo_proxy:MongoProxy) -> Result<Arc<Mutex<DBProxyHubMsgHandle>>, Box<dyn std::error::Error>> {
         let mut _db_server = Arc::new(Mutex::new(DBProxyHubMsgHandle {
             proxy: mongo_proxy,
             queue: Queue::new(), 

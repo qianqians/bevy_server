@@ -6,6 +6,8 @@ use tcp::tcp_server::TcpServer;
 use tcp::tcp_socket::{TcpReader, TcpWriter};
 use close_handle::CloseHandle;
 
+use crate::hub_msg_handle;
+
 pub struct HubProxy {
     name: String,
     wr: Arc<Mutex<TcpWriter>>
