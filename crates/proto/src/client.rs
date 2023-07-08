@@ -29,384 +29,29 @@ use thrift::server::TProcessor;
 use crate::common;
 
 //
-// client service client
+// CreateRemoteEntity
 //
 
-pub trait TClientSyncClient {
-  fn create_remote_entity(&mut self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
-  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()>;
-  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()>;
-  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()>;
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CreateRemoteEntity {
+  pub entity_id: Option<String>,
+  pub argvs: Option<Vec<u8>>,
 }
 
-pub trait TClientSyncClientMarker {}
-
-pub struct ClientSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> ClientSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> ClientSyncClient<IP, OP> {
-    ClientSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for ClientSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> TClientSyncClientMarker for ClientSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + TClientSyncClientMarker> TClientSyncClient for C {
-  fn create_remote_entity(&mut self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Call, self.sequence_number());
-        let call_args = ClientCreateRemoteEntityArgs { entity_id, argvs };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("create_remote_entity", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = ClientCreateRemoteEntityResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Call, self.sequence_number());
-        let call_args = ClientCallRpcArgs { message };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_rpc", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = ClientCallRpcResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Call, self.sequence_number());
-        let call_args = ClientCallRspArgs { rsp };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_rsp", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = ClientCallRspResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Call, self.sequence_number());
-        let call_args = ClientCallErrArgs { err };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_err", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = ClientCallErrResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
+impl CreateRemoteEntity {
+  pub fn new<F1, F2>(entity_id: F1, argvs: F2) -> CreateRemoteEntity where F1: Into<Option<String>>, F2: Into<Option<Vec<u8>>> {
+    CreateRemoteEntity {
+      entity_id: entity_id.into(),
+      argvs: argvs.into(),
     }
   }
 }
 
-//
-// client service processor
-//
-
-pub trait ClientSyncHandler {
-  fn handle_create_remote_entity(&self, entity_id: String, argvs: Vec<u8>) -> thrift::Result<()>;
-  fn handle_call_rpc(&self, message: common::Msg) -> thrift::Result<()>;
-  fn handle_call_rsp(&self, rsp: common::RpcRsp) -> thrift::Result<()>;
-  fn handle_call_err(&self, err: common::RpcErr) -> thrift::Result<()>;
-}
-
-pub struct ClientSyncProcessor<H: ClientSyncHandler> {
-  handler: H,
-}
-
-impl <H: ClientSyncHandler> ClientSyncProcessor<H> {
-  pub fn new(handler: H) -> ClientSyncProcessor<H> {
-    ClientSyncProcessor {
-      handler,
-    }
-  }
-  fn process_create_remote_entity(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TClientProcessFunctions::process_create_remote_entity(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_call_rpc(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TClientProcessFunctions::process_call_rpc(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_call_rsp(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TClientProcessFunctions::process_call_rsp(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_call_err(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    TClientProcessFunctions::process_call_err(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct TClientProcessFunctions;
-
-impl TClientProcessFunctions {
-  pub fn process_create_remote_entity<H: ClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = ClientCreateRemoteEntityArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_create_remote_entity(args.entity_id, args.argvs) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = ClientCreateRemoteEntityResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("create_remote_entity", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_call_rpc<H: ClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = ClientCallRpcArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_rpc(args.message) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = ClientCallRpcResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_call_rsp<H: ClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = ClientCallRspArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_rsp(args.rsp) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = ClientCallRspResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_call_err<H: ClientSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = ClientCallErrArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_err(args.err) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = ClientCallErrResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: ClientSyncHandler> TProcessor for ClientSyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "create_remote_entity" => {
-        self.process_create_remote_entity(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "call_rpc" => {
-        self.process_call_rpc(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "call_rsp" => {
-        self.process_call_rsp(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "call_err" => {
-        self.process_call_err(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// ClientCreateRemoteEntityArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCreateRemoteEntityArgs {
-  entity_id: String,
-  argvs: Vec<u8>,
-}
-
-impl ClientCreateRemoteEntityArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCreateRemoteEntityArgs> {
+impl TSerializable for CreateRemoteEntity {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CreateRemoteEntity> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<Vec<u8>> = None;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -429,73 +74,49 @@ impl ClientCreateRemoteEntityArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("ClientCreateRemoteEntityArgs.entity_id", &f_1)?;
-    verify_required_field_exists("ClientCreateRemoteEntityArgs.argvs", &f_2)?;
-    let ret = ClientCreateRemoteEntityArgs {
-      entity_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      argvs: f_2.expect("auto-generated code should have checked for presence of required fields"),
+    let ret = CreateRemoteEntity {
+      entity_id: f_1,
+      argvs: f_2,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("create_remote_entity_args");
+    let struct_ident = TStructIdentifier::new("create_remote_entity");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
-    o_prot.write_string(&self.entity_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 2))?;
-    o_prot.write_bytes(&self.argvs)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ClientCreateRemoteEntityResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCreateRemoteEntityResult {
-}
-
-impl ClientCreateRemoteEntityResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCreateRemoteEntityResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
     }
-    i_prot.read_struct_end()?;
-    let ret = ClientCreateRemoteEntityResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ClientCreateRemoteEntityResult");
-    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.argvs {
+      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 2))?;
+      o_prot.write_bytes(fld_var)?;
+      o_prot.write_field_end()?
+    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
 }
 
 //
-// ClientCallRpcArgs
+// CallRpc
 //
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallRpcArgs {
-  message: common::Msg,
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallRpc {
+  pub message: Option<common::Msg>,
 }
 
-impl ClientCallRpcArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallRpcArgs> {
+impl CallRpc {
+  pub fn new<F1>(message: F1) -> CallRpc where F1: Into<Option<common::Msg>> {
+    CallRpc {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallRpc {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRpc> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::Msg> = None;
     loop {
@@ -516,68 +137,43 @@ impl ClientCallRpcArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("ClientCallRpcArgs.message", &f_1)?;
-    let ret = ClientCallRpcArgs {
-      message: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    let ret = CallRpc {
+      message: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_rpc_args");
+    let struct_ident = TStructIdentifier::new("call_rpc");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
-    self.message.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ClientCallRpcResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallRpcResult {
-}
-
-impl ClientCallRpcResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallRpcResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
     }
-    i_prot.read_struct_end()?;
-    let ret = ClientCallRpcResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ClientCallRpcResult");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
 }
 
 //
-// ClientCallRspArgs
+// CallRsp
 //
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallRspArgs {
-  rsp: common::RpcRsp,
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallRsp {
+  pub rsp: Option<common::RpcRsp>,
 }
 
-impl ClientCallRspArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallRspArgs> {
+impl CallRsp {
+  pub fn new<F1>(rsp: F1) -> CallRsp where F1: Into<Option<common::RpcRsp>> {
+    CallRsp {
+      rsp: rsp.into(),
+    }
+  }
+}
+
+impl TSerializable for CallRsp {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRsp> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::RpcRsp> = None;
     loop {
@@ -598,68 +194,43 @@ impl ClientCallRspArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("ClientCallRspArgs.rsp", &f_1)?;
-    let ret = ClientCallRspArgs {
-      rsp: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    let ret = CallRsp {
+      rsp: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_rsp_args");
+    let struct_ident = TStructIdentifier::new("call_rsp");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
-    self.rsp.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ClientCallRspResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallRspResult {
-}
-
-impl ClientCallRspResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallRspResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
+    if let Some(ref fld_var) = self.rsp {
+      o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
     }
-    i_prot.read_struct_end()?;
-    let ret = ClientCallRspResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ClientCallRspResult");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
 }
 
 //
-// ClientCallErrArgs
+// CallErr
 //
 
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallErrArgs {
-  err: common::RpcErr,
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallErr {
+  pub err: Option<common::RpcErr>,
 }
 
-impl ClientCallErrArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallErrArgs> {
+impl CallErr {
+  pub fn new<F1>(err: F1) -> CallErr where F1: Into<Option<common::RpcErr>> {
+    CallErr {
+      err: err.into(),
+    }
+  }
+}
+
+impl TSerializable for CallErr {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallErr> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::RpcErr> = None;
     loop {
@@ -680,52 +251,19 @@ impl ClientCallErrArgs {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    verify_required_field_exists("ClientCallErrArgs.err", &f_1)?;
-    let ret = ClientCallErrArgs {
-      err: f_1.expect("auto-generated code should have checked for presence of required fields"),
+    let ret = CallErr {
+      err: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_err_args");
+    let struct_ident = TStructIdentifier::new("call_err");
     o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
-    self.err.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ClientCallErrResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct ClientCallErrResult {
-}
-
-impl ClientCallErrResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallErrResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
+    if let Some(ref fld_var) = self.err {
+      o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
     }
-    i_prot.read_struct_end()?;
-    let ret = ClientCallErrResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ClientCallErrResult");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }

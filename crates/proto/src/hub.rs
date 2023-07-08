@@ -29,19 +29,21 @@ use thrift::server::TProcessor;
 use crate::common;
 
 //
-// ClientInfo
+// NtfClientRequestService
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct ClientInfo {
+pub struct NtfClientRequestService {
+  pub service_name: Option<String>,
   pub gate_name: Option<String>,
   pub conn_id: Option<String>,
   pub client_info: Option<Vec<u8>>,
 }
 
-impl ClientInfo {
-  pub fn new<F1, F2, F3>(gate_name: F1, conn_id: F2, client_info: F3) -> ClientInfo where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>> {
-    ClientInfo {
+impl NtfClientRequestService {
+  pub fn new<F1, F2, F3, F4>(service_name: F1, gate_name: F2, conn_id: F3, client_info: F4) -> NtfClientRequestService where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<Vec<u8>>> {
+    NtfClientRequestService {
+      service_name: service_name.into(),
       gate_name: gate_name.into(),
       conn_id: conn_id.into(),
       client_info: client_info.into(),
@@ -49,12 +51,13 @@ impl ClientInfo {
   }
 }
 
-impl TSerializable for ClientInfo {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientInfo> {
+impl TSerializable for NtfClientRequestService {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<NtfClientRequestService> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = Some("".to_owned());
     let mut f_2: Option<String> = Some("".to_owned());
-    let mut f_3: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -71,8 +74,12 @@ impl TSerializable for ClientInfo {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -81,30 +88,389 @@ impl TSerializable for ClientInfo {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = ClientInfo {
-      gate_name: f_1,
-      conn_id: f_2,
-      client_info: f_3,
+    let ret = NtfClientRequestService {
+      service_name: f_1,
+      gate_name: f_2,
+      conn_id: f_3,
+      client_info: f_4,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("client_info");
+    let struct_ident = TStructIdentifier::new("ntf_client_request_service");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.service_name {
+      o_prot.write_field_begin(&TFieldIdentifier::new("service_name", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.gate_name {
-      o_prot.write_field_begin(&TFieldIdentifier::new("gate_name", TType::String, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("gate_name", TType::String, 2))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.conn_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 2))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 3))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.client_info {
-      o_prot.write_field_begin(&TFieldIdentifier::new("client_info", TType::String, 3))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("client_info", TType::String, 4))?;
       o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// NtfTransferMsgEnd
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct NtfTransferMsgEnd {
+  pub entity_id: Option<String>,
+}
+
+impl NtfTransferMsgEnd {
+  pub fn new<F1>(entity_id: F1) -> NtfTransferMsgEnd where F1: Into<Option<String>> {
+    NtfTransferMsgEnd {
+      entity_id: entity_id.into(),
+    }
+  }
+}
+
+impl TSerializable for NtfTransferMsgEnd {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<NtfTransferMsgEnd> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = NtfTransferMsgEnd {
+      entity_id: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ntf_transfer_msg_end");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CallRpc
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallRpc {
+  pub message: Option<common::Msg>,
+}
+
+impl CallRpc {
+  pub fn new<F1>(message: F1) -> CallRpc where F1: Into<Option<common::Msg>> {
+    CallRpc {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallRpc {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRpc> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallRpc {
+      message: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_rpc");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CallRsp
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallRsp {
+  pub rsp: Option<common::RpcRsp>,
+}
+
+impl CallRsp {
+  pub fn new<F1>(rsp: F1) -> CallRsp where F1: Into<Option<common::RpcRsp>> {
+    CallRsp {
+      rsp: rsp.into(),
+    }
+  }
+}
+
+impl TSerializable for CallRsp {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRsp> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcRsp> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::RpcRsp::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallRsp {
+      rsp: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_rsp");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.rsp {
+      o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CallErr
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallErr {
+  pub err: Option<common::RpcErr>,
+}
+
+impl CallErr {
+  pub fn new<F1>(err: F1) -> CallErr where F1: Into<Option<common::RpcErr>> {
+    CallErr {
+      err: err.into(),
+    }
+  }
+}
+
+impl TSerializable for CallErr {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallErr> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::RpcErr> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::RpcErr::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallErr {
+      err: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_err");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.err {
+      o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubGateService
+//
+
+#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum HubGateService {
+  ClientRequestService(NtfClientRequestService),
+  TransferMsgEnd(NtfTransferMsgEnd),
+  CallRpc(CallRpc),
+  CallRsp(CallRsp),
+  CallErr(CallErr),
+}
+
+impl TSerializable for HubGateService {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubGateService> {
+    let mut ret: Option<HubGateService> = None;
+    let mut received_field_count = 0;
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = NtfClientRequestService::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::ClientRequestService(val));
+          }
+          received_field_count += 1;
+        },
+        2 => {
+          let val = NtfTransferMsgEnd::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::TransferMsgEnd(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
+          let val = CallRpc::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::CallRpc(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
+          let val = CallRsp::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::CallRsp(val));
+          }
+          received_field_count += 1;
+        },
+        5 => {
+          let val = CallErr::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::CallErr(val));
+          }
+          received_field_count += 1;
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+          received_field_count += 1;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    if received_field_count == 0 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received empty union from remote HubGateService"
+          )
+        )
+      )
+    } else if received_field_count > 1 {
+      Err(
+        thrift::Error::Protocol(
+          ProtocolError::new(
+            ProtocolErrorKind::InvalidData,
+            "received multiple fields for union from remote HubGateService"
+          )
+        )
+      )
+    } else {
+      Ok(ret.expect("return value should have been constructed"))
+    }
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("hub_gate_service");
+    o_prot.write_struct_begin(&struct_ident)?;
+    match *self {
+      HubGateService::ClientRequestService(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("client_request_service", TType::Struct, 1))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::TransferMsgEnd(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("transfer_msg_end", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::CallRpc(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::CallRsp(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::CallErr(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
     }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
@@ -1646,1015 +2012,6 @@ impl HubTransferControlNtfClientConnInfoResult {
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("HubTransferControlNtfClientConnInfoResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// hub_gate_transfer_control service client
-//
-
-pub trait THubGateTransferControlSyncClient {
-  fn ntf_transfer_msg_end(&mut self, entity_id: String) -> thrift::Result<()>;
-}
-
-pub trait THubGateTransferControlSyncClientMarker {}
-
-pub struct HubGateTransferControlSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> HubGateTransferControlSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> HubGateTransferControlSyncClient<IP, OP> {
-    HubGateTransferControlSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for HubGateTransferControlSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> THubGateTransferControlSyncClientMarker for HubGateTransferControlSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + THubGateTransferControlSyncClientMarker> THubGateTransferControlSyncClient for C {
-  fn ntf_transfer_msg_end(&mut self, entity_id: String) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ntf_transfer_msg_end", TMessageType::Call, self.sequence_number());
-        let call_args = HubGateTransferControlNtfTransferMsgEndArgs { entity_id };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("ntf_transfer_msg_end", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubGateTransferControlNtfTransferMsgEndResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-}
-
-//
-// hub_gate_transfer_control service processor
-//
-
-pub trait HubGateTransferControlSyncHandler {
-  fn handle_ntf_transfer_msg_end(&self, entity_id: String) -> thrift::Result<()>;
-}
-
-pub struct HubGateTransferControlSyncProcessor<H: HubGateTransferControlSyncHandler> {
-  handler: H,
-}
-
-impl <H: HubGateTransferControlSyncHandler> HubGateTransferControlSyncProcessor<H> {
-  pub fn new(handler: H) -> HubGateTransferControlSyncProcessor<H> {
-    HubGateTransferControlSyncProcessor {
-      handler,
-    }
-  }
-  fn process_ntf_transfer_msg_end(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubGateTransferControlProcessFunctions::process_ntf_transfer_msg_end(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct THubGateTransferControlProcessFunctions;
-
-impl THubGateTransferControlProcessFunctions {
-  pub fn process_ntf_transfer_msg_end<H: HubGateTransferControlSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubGateTransferControlNtfTransferMsgEndArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ntf_transfer_msg_end(args.entity_id) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("ntf_transfer_msg_end", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubGateTransferControlNtfTransferMsgEndResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("ntf_transfer_msg_end", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("ntf_transfer_msg_end", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: HubGateTransferControlSyncHandler> TProcessor for HubGateTransferControlSyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "ntf_transfer_msg_end" => {
-        self.process_ntf_transfer_msg_end(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// HubGateTransferControlNtfTransferMsgEndArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubGateTransferControlNtfTransferMsgEndArgs {
-  entity_id: String,
-}
-
-impl HubGateTransferControlNtfTransferMsgEndArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubGateTransferControlNtfTransferMsgEndArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubGateTransferControlNtfTransferMsgEndArgs.entity_id", &f_1)?;
-    let ret = HubGateTransferControlNtfTransferMsgEndArgs {
-      entity_id: f_1.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_transfer_msg_end_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
-    o_prot.write_string(&self.entity_id)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubGateTransferControlNtfTransferMsgEndResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubGateTransferControlNtfTransferMsgEndResult {
-}
-
-impl HubGateTransferControlNtfTransferMsgEndResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubGateTransferControlNtfTransferMsgEndResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubGateTransferControlNtfTransferMsgEndResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubGateTransferControlNtfTransferMsgEndResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// hub_service service client
-//
-
-pub trait THubServiceSyncClient {
-  fn ntf_client_request_service(&mut self, service_name: String, client_info: ClientInfo) -> thrift::Result<()>;
-}
-
-pub trait THubServiceSyncClientMarker {}
-
-pub struct HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> HubServiceSyncClient<IP, OP> {
-    HubServiceSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> THubServiceSyncClientMarker for HubServiceSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + THubServiceSyncClientMarker> THubServiceSyncClient for C {
-  fn ntf_client_request_service(&mut self, service_name: String, client_info: ClientInfo) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Call, self.sequence_number());
-        let call_args = HubServiceNtfClientRequestServiceArgs { service_name, client_info };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("ntf_client_request_service", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubServiceNtfClientRequestServiceResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-}
-
-//
-// hub_service service processor
-//
-
-pub trait HubServiceSyncHandler {
-  fn handle_ntf_client_request_service(&self, service_name: String, client_info: ClientInfo) -> thrift::Result<()>;
-}
-
-pub struct HubServiceSyncProcessor<H: HubServiceSyncHandler> {
-  handler: H,
-}
-
-impl <H: HubServiceSyncHandler> HubServiceSyncProcessor<H> {
-  pub fn new(handler: H) -> HubServiceSyncProcessor<H> {
-    HubServiceSyncProcessor {
-      handler,
-    }
-  }
-  fn process_ntf_client_request_service(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubServiceProcessFunctions::process_ntf_client_request_service(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct THubServiceProcessFunctions;
-
-impl THubServiceProcessFunctions {
-  pub fn process_ntf_client_request_service<H: HubServiceSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubServiceNtfClientRequestServiceArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_ntf_client_request_service(args.service_name, args.client_info) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubServiceNtfClientRequestServiceResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("ntf_client_request_service", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: HubServiceSyncHandler> TProcessor for HubServiceSyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "ntf_client_request_service" => {
-        self.process_ntf_client_request_service(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// HubServiceNtfClientRequestServiceArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubServiceNtfClientRequestServiceArgs {
-  service_name: String,
-  client_info: ClientInfo,
-}
-
-impl HubServiceNtfClientRequestServiceArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubServiceNtfClientRequestServiceArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = None;
-    let mut f_2: Option<ClientInfo> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = ClientInfo::read_from_in_protocol(i_prot)?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubServiceNtfClientRequestServiceArgs.service_name", &f_1)?;
-    verify_required_field_exists("HubServiceNtfClientRequestServiceArgs.client_info", &f_2)?;
-    let ret = HubServiceNtfClientRequestServiceArgs {
-      service_name: f_1.expect("auto-generated code should have checked for presence of required fields"),
-      client_info: f_2.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_client_request_service_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("service_name", TType::String, 1))?;
-    o_prot.write_string(&self.service_name)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("client_info", TType::Struct, 2))?;
-    self.client_info.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubServiceNtfClientRequestServiceResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubServiceNtfClientRequestServiceResult {
-}
-
-impl HubServiceNtfClientRequestServiceResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubServiceNtfClientRequestServiceResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubServiceNtfClientRequestServiceResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubServiceNtfClientRequestServiceResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// hub_client_call_hub service client
-//
-
-pub trait THubClientCallHubSyncClient {
-  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()>;
-  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()>;
-  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()>;
-}
-
-pub trait THubClientCallHubSyncClientMarker {}
-
-pub struct HubClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  _i_prot: IP,
-  _o_prot: OP,
-  _sequence_number: i32,
-}
-
-impl <IP, OP> HubClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  pub fn new(input_protocol: IP, output_protocol: OP) -> HubClientCallHubSyncClient<IP, OP> {
-    HubClientCallHubSyncClient { _i_prot: input_protocol, _o_prot: output_protocol, _sequence_number: 0 }
-  }
-}
-
-impl <IP, OP> TThriftClient for HubClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {
-  fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }
-  fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }
-  fn sequence_number(&self) -> i32 { self._sequence_number }
-  fn increment_sequence_number(&mut self) -> i32 { self._sequence_number += 1; self._sequence_number }
-}
-
-impl <IP, OP> THubClientCallHubSyncClientMarker for HubClientCallHubSyncClient<IP, OP> where IP: TInputProtocol, OP: TOutputProtocol {}
-
-impl <C: TThriftClient + THubClientCallHubSyncClientMarker> THubClientCallHubSyncClient for C {
-  fn call_rpc(&mut self, message: common::Msg) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Call, self.sequence_number());
-        let call_args = HubClientCallHubCallRpcArgs { message };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_rpc", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubClientCallHubCallRpcResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn call_rsp(&mut self, rsp: common::RpcRsp) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Call, self.sequence_number());
-        let call_args = HubClientCallHubCallRspArgs { rsp };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_rsp", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubClientCallHubCallRspResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-  fn call_err(&mut self, err: common::RpcErr) -> thrift::Result<()> {
-    (
-      {
-        self.increment_sequence_number();
-        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Call, self.sequence_number());
-        let call_args = HubClientCallHubCallErrArgs { err };
-        self.o_prot_mut().write_message_begin(&message_ident)?;
-        call_args.write_to_out_protocol(self.o_prot_mut())?;
-        self.o_prot_mut().write_message_end()?;
-        self.o_prot_mut().flush()
-      }
-    )?;
-    {
-      let message_ident = self.i_prot_mut().read_message_begin()?;
-      verify_expected_sequence_number(self.sequence_number(), message_ident.sequence_number)?;
-      verify_expected_service_call("call_err", &message_ident.name)?;
-      if message_ident.message_type == TMessageType::Exception {
-        let remote_error = thrift::Error::read_application_error_from_in_protocol(self.i_prot_mut())?;
-        self.i_prot_mut().read_message_end()?;
-        return Err(thrift::Error::Application(remote_error))
-      }
-      verify_expected_message_type(TMessageType::Reply, message_ident.message_type)?;
-      let result = HubClientCallHubCallErrResult::read_from_in_protocol(self.i_prot_mut())?;
-      self.i_prot_mut().read_message_end()?;
-      result.ok_or()
-    }
-  }
-}
-
-//
-// hub_client_call_hub service processor
-//
-
-pub trait HubClientCallHubSyncHandler {
-  fn handle_call_rpc(&self, message: common::Msg) -> thrift::Result<()>;
-  fn handle_call_rsp(&self, rsp: common::RpcRsp) -> thrift::Result<()>;
-  fn handle_call_err(&self, err: common::RpcErr) -> thrift::Result<()>;
-}
-
-pub struct HubClientCallHubSyncProcessor<H: HubClientCallHubSyncHandler> {
-  handler: H,
-}
-
-impl <H: HubClientCallHubSyncHandler> HubClientCallHubSyncProcessor<H> {
-  pub fn new(handler: H) -> HubClientCallHubSyncProcessor<H> {
-    HubClientCallHubSyncProcessor {
-      handler,
-    }
-  }
-  fn process_call_rpc(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubClientCallHubProcessFunctions::process_call_rpc(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_call_rsp(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubClientCallHubProcessFunctions::process_call_rsp(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-  fn process_call_err(&self, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    THubClientCallHubProcessFunctions::process_call_err(&self.handler, incoming_sequence_number, i_prot, o_prot)
-  }
-}
-
-pub struct THubClientCallHubProcessFunctions;
-
-impl THubClientCallHubProcessFunctions {
-  pub fn process_call_rpc<H: HubClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubClientCallHubCallRpcArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_rpc(args.message) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubClientCallHubCallRpcResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_rpc", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_call_rsp<H: HubClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubClientCallHubCallRspArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_rsp(args.rsp) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubClientCallHubCallRspResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_rsp", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-  pub fn process_call_err<H: HubClientCallHubSyncHandler>(handler: &H, incoming_sequence_number: i32, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let args = HubClientCallHubCallErrArgs::read_from_in_protocol(i_prot)?;
-    match handler.handle_call_err(args.err) {
-      Ok(_) => {
-        let message_ident = TMessageIdentifier::new("call_err", TMessageType::Reply, incoming_sequence_number);
-        o_prot.write_message_begin(&message_ident)?;
-        let ret = HubClientCallHubCallErrResult {  };
-        ret.write_to_out_protocol(o_prot)?;
-        o_prot.write_message_end()?;
-        o_prot.flush()
-      },
-      Err(e) => {
-        match e {
-          thrift::Error::Application(app_err) => {
-            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&app_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-          _ => {
-            let ret_err = {
-              ApplicationError::new(
-                ApplicationErrorKind::Unknown,
-                e.to_string()
-              )
-            };
-            let message_ident = TMessageIdentifier::new("call_err", TMessageType::Exception, incoming_sequence_number);
-            o_prot.write_message_begin(&message_ident)?;
-            thrift::Error::write_application_error_to_out_protocol(&ret_err, o_prot)?;
-            o_prot.write_message_end()?;
-            o_prot.flush()
-          },
-        }
-      },
-    }
-  }
-}
-
-impl <H: HubClientCallHubSyncHandler> TProcessor for HubClientCallHubSyncProcessor<H> {
-  fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let message_ident = i_prot.read_message_begin()?;
-    let res = match &*message_ident.name {
-      "call_rpc" => {
-        self.process_call_rpc(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "call_rsp" => {
-        self.process_call_rsp(message_ident.sequence_number, i_prot, o_prot)
-      },
-      "call_err" => {
-        self.process_call_err(message_ident.sequence_number, i_prot, o_prot)
-      },
-      method => {
-        Err(
-          thrift::Error::Application(
-            ApplicationError::new(
-              ApplicationErrorKind::UnknownMethod,
-              format!("unknown method {}", method)
-            )
-          )
-        )
-      },
-    };
-    thrift::server::handle_process_result(&message_ident, res, o_prot)
-  }
-}
-
-//
-// HubClientCallHubCallRpcArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallRpcArgs {
-  message: common::Msg,
-}
-
-impl HubClientCallHubCallRpcArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallRpcArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubClientCallHubCallRpcArgs.message", &f_1)?;
-    let ret = HubClientCallHubCallRpcArgs {
-      message: f_1.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_rpc_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
-    self.message.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubClientCallHubCallRpcResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallRpcResult {
-}
-
-impl HubClientCallHubCallRpcResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallRpcResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubClientCallHubCallRpcResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubClientCallHubCallRpcResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubClientCallHubCallRspArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallRspArgs {
-  rsp: common::RpcRsp,
-}
-
-impl HubClientCallHubCallRspArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallRspArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::RpcRsp> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = common::RpcRsp::read_from_in_protocol(i_prot)?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubClientCallHubCallRspArgs.rsp", &f_1)?;
-    let ret = HubClientCallHubCallRspArgs {
-      rsp: f_1.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_rsp_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("rsp", TType::Struct, 1))?;
-    self.rsp.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubClientCallHubCallRspResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallRspResult {
-}
-
-impl HubClientCallHubCallRspResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallRspResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubClientCallHubCallRspResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubClientCallHubCallRspResult");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubClientCallHubCallErrArgs
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallErrArgs {
-  err: common::RpcErr,
-}
-
-impl HubClientCallHubCallErrArgs {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallErrArgs> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::RpcErr> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = common::RpcErr::read_from_in_protocol(i_prot)?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    verify_required_field_exists("HubClientCallHubCallErrArgs.err", &f_1)?;
-    let ret = HubClientCallHubCallErrArgs {
-      err: f_1.expect("auto-generated code should have checked for presence of required fields"),
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_err_args");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_begin(&TFieldIdentifier::new("err", TType::Struct, 1))?;
-    self.err.write_to_out_protocol(o_prot)?;
-    o_prot.write_field_end()?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubClientCallHubCallErrResult
-//
-
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-struct HubClientCallHubCallErrResult {
-}
-
-impl HubClientCallHubCallErrResult {
-  fn ok_or(self) -> thrift::Result<()> {
-    Ok(())
-  }
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubClientCallHubCallErrResult> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubClientCallHubCallErrResult {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("HubClientCallHubCallErrResult");
     o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()

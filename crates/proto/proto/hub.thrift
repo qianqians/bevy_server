@@ -1,55 +1,49 @@
 include "common.thrift"
 
-service hub {
-	
-	/*
-	 * register hub to other hub.
-	 */
-	bool reg_hub(1:string hub_name, 2:string hub_type),
-
+/*
+ * ntf_client_request_service.
+ */
+struct ntf_client_request_service {
+	1:string service_name,
+	2:string gate_name, 
+	3:string conn_id,
+	4:binary client_info,
 }
 
-service hub_transfer_control {
-
-	/*
-	 * notify entity exist server transfer control, ready to accept msg from new sources(gate).
-	 */
-	void ntf_transfer(1:string entity_id),
-
-	/*
-	 * ack initiate transfer server, ready to transfer.
-	 */
-	void ack_transfer(1:string entity_id),
-
-	/*
-	 * notify entity exist server, target entity conn info(gate).
-	 */
-	void ntf_client_conn_info(1:string entity_id, 2:string gate_name, 3:string conn_id)
-
+/*
+ * gate notify entity exist server, old msg send complete.
+ */
+struct ntf_transfer_msg_end {
+	1:string entity_id
 }
 
-service hub_gate_transfer_control {
-
-	/*
-	 * gate notify entity exist server, old msg send complete.
-	 */
-	void ntf_transfer_msg_end(1:string entity_id);
-
+/*
+ * client call rpc to hub.
+ */
+struct call_rpc {
+	1:common.msg message
 }
 
-struct client_info {
-	1:string gate_name, 
-	2:string conn_id,
-	3:binary client_info,
+/*
+ * client callback rsp to hub.
+ */
+struct call_rsp {
+	1:common.rpc_rsp rsp
 }
 
-service hub_service {
+/*
+ * client callback err to hub.
+ */
+struct call_err {
+	1:common.rpc_err err
+}
 
-	/*
-	 * ntf_client_request_service.
-	 */
-	void ntf_client_request_service(1:string service_name, 2:client_info client_info)
-
+union hub_gate_service {
+	1:ntf_client_request_service client_request_service,
+	2:ntf_transfer_msg_end transfer_msg_end,
+	3:call_rpc call_rpc,
+	4:call_rsp call_rsp,
+	5:call_err call_err
 }
 
 struct ack_get_guid {
@@ -102,22 +96,31 @@ union db_callback {
 	8:ack_get_object_info_end get_object_info_end
 }
 
-service hub_client_call_hub {
+service hub {
+	
+	/*
+	 * register hub to other hub.
+	 */
+	bool reg_hub(1:string hub_name, 2:string hub_type),
+
+}
+
+service hub_transfer_control {
 
 	/*
-	 * client call rpc to hub.
+	 * notify entity exist server transfer control, ready to accept msg from new sources(gate).
 	 */
-	void call_rpc(1:common.msg message),
+	void ntf_transfer(1:string entity_id),
 
 	/*
-	 * client callback rsp to hub.
+	 * ack initiate transfer server, ready to transfer.
 	 */
-	void call_rsp(1:common.rpc_rsp rsp),
+	void ack_transfer(1:string entity_id),
 
 	/*
-	 * client callback err to hub.
+	 * notify entity exist server, target entity conn info(gate).
 	 */
-	void call_err(1:common.rpc_err err)
+	void ntf_client_conn_info(1:string entity_id, 2:string gate_name, 3:string conn_id)
 
 }
 
