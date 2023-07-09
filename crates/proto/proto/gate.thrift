@@ -85,7 +85,7 @@ struct hub_call_client_global {
  * hub request kick off client.
  */
 struct hub_call_kick_off_client {
-
+	1:string conn_id
 }
 
 union gate_hub_service {
@@ -98,7 +98,8 @@ union gate_hub_service {
 	7:hub_call_client_err call_err,
 	8:hub_call_client_ntf call_ntf,
 	9:hub_call_client_group call_group,
-	10:hub_call_client_global call_global
+	10:hub_call_client_global call_global,
+	11:hub_call_kick_off_client kick_off
 }
 
 /*
@@ -122,8 +123,15 @@ struct client_call_hub_err {
 	1:common.rpc_err err
 }
 
+/*
+ * client confirm kick off
+ */
+struct client_confirm_kick_off {
+}
+
 union gate_client_service {
 	1:client_call_hub_rpc call_rpc,
 	2:client_call_hub_rsp call_rsp,
-	3:client_call_hub_rsp call_err
+	3:client_call_hub_rsp call_err,
+	4:client_confirm_kick_off confirm_kick_off
 }

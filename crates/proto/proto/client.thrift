@@ -10,6 +10,12 @@ struct create_remote_entity {
 }
 
 /*
+ * gate forward hub msg kick_off client
+ */
+struct kick_off {
+}
+
+/*
  * hub call rpc to client.
  */
 struct call_rpc {
@@ -39,8 +45,9 @@ struct call_ntf {
 
 union client_service {
 	1:create_remote_entity create_remote_entity,
-	2:call_rpc call_rpc,
-	3:call_rsp call_rsp,
-	4:call_err call_err,
-	5:call_ntf call_ntf
+	2:kick_off kick_off,
+	3:call_rpc call_rpc,
+	4:call_rsp call_rsp,
+	5:call_err call_err,
+	6:call_ntf call_ntf
 }

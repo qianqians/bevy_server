@@ -99,6 +99,43 @@ impl TSerializable for CreateRemoteEntity {
 }
 
 //
+// KickOff
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct KickOff {
+}
+
+impl KickOff {
+  pub fn new() -> KickOff {
+    KickOff {}
+  }
+}
+
+impl TSerializable for KickOff {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<KickOff> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = KickOff {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("kick_off");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // CallRpc
 //
 
@@ -333,6 +370,7 @@ impl TSerializable for CallNtf {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ClientService {
   CreateRemoteEntity(CreateRemoteEntity),
+  KickOff(KickOff),
   CallRpc(CallRpc),
   CallRsp(CallRsp),
   CallErr(CallErr),
@@ -359,27 +397,34 @@ impl TSerializable for ClientService {
           received_field_count += 1;
         },
         2 => {
+          let val = KickOff::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::KickOff(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
           let val = CallRpc::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallRpc(val));
           }
           received_field_count += 1;
         },
-        3 => {
+        4 => {
           let val = CallRsp::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallRsp(val));
           }
           received_field_count += 1;
         },
-        4 => {
+        5 => {
           let val = CallErr::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallErr(val));
           }
           received_field_count += 1;
         },
-        5 => {
+        6 => {
           let val = CallNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallNtf(val));
@@ -425,23 +470,28 @@ impl TSerializable for ClientService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
+      ClientService::KickOff(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
       ClientService::CallRpc(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 2))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallRsp(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 3))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallErr(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 4))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallNtf(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 5))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 6))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
