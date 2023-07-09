@@ -29,9 +29,9 @@ impl WSSServer {
         let _join = tokio::spawn(async move {
             for request in server.filter_map(Result::ok) {
                 if !request.protocols().contains(&"websocket".to_string()) {
-                    request.reject().unwrap();
                     error!("wss protocol wrong!");
-                    return;
+                    request.reject().unwrap();
+                    continue;
                 }
 
                 let mut _client = request.use_protocol("websocket").accept().unwrap();

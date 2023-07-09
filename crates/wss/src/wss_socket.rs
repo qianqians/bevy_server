@@ -10,32 +10,27 @@ use net::{NetWriter, NetReader, NetPack};
 use close_handle::CloseHandle;
 
 pub struct WSSReader {
-    s: Arc<Mutex<websocket::sync::Client<websocket::native_tls::TlsStream<std::net::TcpStream>>>>,
-    join: Option<JoinHandle<()>>
+    s: Arc<Mutex<websocket::sync::Client<websocket::native_tls::TlsStream<std::net::TcpStream>>>>
 }
 
 
 impl WSSReader {
     pub fn new(_s: Arc<Mutex<websocket::sync::Client<websocket::native_tls::TlsStream<std::net::TcpStream>>>>) -> WSSReader {
         WSSReader { 
-            s: _s,
-            join: None 
+            s: _s
         }
-    }
-
-    pub async fn join(self) {
-        let j = match self.join {
-            None => return,
-            Some(_j) => _j
-        };
-        let _ = j.await;
     }
 }
 
 impl NetReader for WSSReader {
-    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), h: Arc<Mutex<H>>, s: Arc<Mutex<S>>,  c: Arc<Mutex<CloseHandle>>) {
+    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, 
+        f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), 
+        h: Arc<Mutex<H>>, 
+        s: Arc<Mutex<S>>,  
+        c: Arc<Mutex<CloseHandle>>) -> JoinHandle<()>
+    {
         let mut _p = self;
-        _p.join = Some(tokio::spawn(async move {
+        tokio::spawn(async move {
             let mut net_pack = NetPack::new();
             loop {
                 let mut _client_ref = _p.s.as_ref().lock().unwrap();
@@ -70,7 +65,7 @@ impl NetReader for WSSReader {
                     break;
                 }
             }
-        }));
+        })
     }
 }
 
@@ -99,5 +94,10 @@ impl NetWriter for WSSWriter {
                 return true;
             }
         }
+    }
+
+    async fn close(&mut self) {
+        let s = self.s.as_ref().lock().unwrap();
+        let _ = s.shutdown();
     }
 }

@@ -41,7 +41,7 @@ impl DBProxyServer {
     }
 
     fn do_accept(_h: Arc<Mutex<DBProxyHubMsgHandle>>, _c: Arc<Mutex<CloseHandle>>, rd: TcpReader, wr: TcpWriter) {
-        rd.start(DBProxyHubMsgHandle::do_event, _h, Arc::new(Mutex::new(wr)), _c)
+        let _ = rd.start(DBProxyHubMsgHandle::do_event, _h, Arc::new(Mutex::new(wr)), _c);
     }
 
     pub fn close(&self) {

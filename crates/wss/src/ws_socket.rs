@@ -17,8 +17,7 @@ use close_handle::CloseHandle;
 pub struct WSReader {
     ip: SocketAddr,
     rd: Reader<TcpStream>, 
-    wr: Arc<Mutex<Writer<TcpStream>>>, 
-    join: Option<JoinHandle<()>>
+    wr: Arc<Mutex<Writer<TcpStream>>>,
 }
 
 impl WSReader {
@@ -26,24 +25,20 @@ impl WSReader {
         WSReader { 
             ip: _ip,
             rd: _rd, 
-            wr: _wr,
-            join: None 
+            wr: _wr
         }
-    }
-
-    pub async fn join(self) {
-        let j = match self.join {
-            None => return,
-            Some(_j) => _j
-        };
-        let _ = j.await;
     }
 }
 
 impl NetReader for WSReader {
-    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), h: Arc<Mutex<H>>, s: Arc<Mutex<S>>,  c: Arc<Mutex<CloseHandle>>) {
+    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, 
+        f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), 
+        h: Arc<Mutex<H>>, 
+        s: Arc<Mutex<S>>,  
+        c: Arc<Mutex<CloseHandle>>) -> JoinHandle<()>
+    {
         let mut _p = self;
-        _p.join = Some(tokio::spawn(async move {
+        tokio::spawn(async move {
             let mut net_pack = NetPack::new();
             loop {
                 let message = _p.rd.recv_message().unwrap();
@@ -79,7 +74,7 @@ impl NetReader for WSReader {
                     break;
                 }
             }
-        }));
+        })
     }
 }
 
@@ -108,5 +103,10 @@ impl NetWriter for WSWriter {
                 return true;
             }
         }
+    }
+
+    async fn close(&mut self) {
+        let mut wr = self.wr.as_ref().lock().unwrap();
+        wr.shutdown_all();
     }
 }

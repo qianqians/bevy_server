@@ -28,33 +28,31 @@ struct ntf_transfer_complete {
  * create remote entity in client.
  */
 struct create_remote_entity {
-	1:string conn_id,
+	1:list<string> conn_id,
 	2:string entity_id,
-	3:binary argvs
+	3:bool is_main,
+	4:binary argvs
 }
 
 /*
  * hub send rpc msg to client.
  */
 struct hub_call_client_rpc {
-	1:string conn_id,
-	2:common.msg message
+	1:common.msg message
 }
 
 /*
  * hub send rsp to client.
  */
 struct hub_call_client_rsp {
-	1:string conn_id,
-	2:common.rpc_rsp rsp
+	1:common.rpc_rsp rsp
 }
 
 /*
  * hub send err to client.
  */
 struct hub_call_client_err {
-	1:string conn_id,
-	2:common.rpc_err err
+	1:common.rpc_err err
 }
 
 /*
@@ -81,6 +79,13 @@ struct hub_call_client_global {
 	1:string method,
 	2:binary argvs,
 	3:bool is_in_order
+}
+
+/*
+ * hub request kick off client.
+ */
+struct hub_call_kick_off_client {
+
 }
 
 union gate_hub_service {

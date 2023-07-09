@@ -14,31 +14,26 @@ use net::{NetWriter, NetReader, NetPack};
 use close_handle::CloseHandle;
 
 pub struct TcpReader {
-    rd: ReadHalf<TcpStream>, 
-    join: Option<JoinHandle<()>>
+    rd: ReadHalf<TcpStream>
 }
 
 impl TcpReader {
     pub fn new(_rd: ReadHalf<TcpStream>) -> TcpReader {
         TcpReader { 
-            rd: _rd, 
-            join: None 
+            rd: _rd
         }
-    }
-
-    pub async fn join(self) {
-        let j = match self.join {
-            None => return,
-            Some(_j) => _j
-        };
-        let _ = j.await;
     }
 }
 
 impl NetReader for TcpReader {
-    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), h: Arc<Mutex<H>>, s: Arc<Mutex<S>>,  c: Arc<Mutex<CloseHandle>>) {
+    fn start<H: Send + Sync + 'static, S: NetWriter + Send + 'static>(self, 
+        f:fn(h: Arc<Mutex<H>>, s: Arc<Mutex<S>>, data:Vec<u8>), 
+        h: Arc<Mutex<H>>, 
+        s: Arc<Mutex<S>>,  
+        c: Arc<Mutex<CloseHandle>>) -> JoinHandle<()>
+    {
         let mut _p = self;
-        _p.join = Some(tokio::spawn(async move {
+        tokio::spawn(async move {
             let mut buf = vec![0; 1024];
             let mut net_pack = NetPack::new();
 
@@ -67,7 +62,7 @@ impl NetReader for TcpReader {
                     break;
                 }
             }
-        }));
+        })
     }
 }
 
@@ -94,5 +89,9 @@ impl NetWriter for TcpWriter {
                 return true;
             }
         }
+    }
+
+    async fn close(&mut self) {
+        let _ = self.wr.shutdown().await;
     }
 }

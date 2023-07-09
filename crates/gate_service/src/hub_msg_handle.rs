@@ -27,10 +27,15 @@ use proto::client::{
     CallNtf
 };
 
+use proto::hub::{
+    HubGateService,
+    NtfTransferMsgEnd
+};
+
 use tcp::tcp_socket::{TcpReader, TcpWriter};
 use queue::Queue;
 
-use crate::gate_service::{ConnManager, HubProxy};
+use crate::gate_service::{DelayHubMsg, ConnManager, HubProxy};
 
 pub struct HubEvent {
     proxy: Arc<Mutex<HubProxy>>,
@@ -62,7 +67,7 @@ impl GateHubMsgHandle {
         self.queue.enque(Box::new(ev))
     }
 
-    pub fn do_event(_proxy: Arc<Mutex<HubProxy>>, _: Arc<Mutex<TcpWriter>>, data: Vec<u8>) {
+    pub fn on_event(_proxy: Arc<Mutex<HubProxy>>, _: Arc<Mutex<TcpWriter>>, data: Vec<u8>) {
         trace!("do_hub_event begin!");
 
         let _proxy_cloen = _proxy.clone();
@@ -74,22 +79,41 @@ impl GateHubMsgHandle {
             }
             Ok(d) => d
         };
-        _p.on_event(HubEvent {
+        let _handle_arc = _p.get_msg_handle();
+        let mut _handle = _handle_arc.as_ref().lock().unwrap();
+        _handle.enque_event(HubEvent {
             proxy: _proxy_cloen,
             ev: _ev
         })
     }
 
-    pub fn do_reg_hub(_proxy: Arc<Mutex<HubProxy>>, ev: RegHub) {
+    pub async fn do_reg_hub(_proxy: Arc<Mutex<HubProxy>>, ev: RegHub) {
         trace!("do_hub_event reg_hu begin!");
 
-        let mut _p = _proxy.as_ref().lock().unwrap();
         let name = ev.hub_name.unwrap();
         let _type = ev.hub_type.unwrap();
-        _p.set_hub_info(name, _type)
+        HubProxy::set_hub_info(_proxy, name, _type)
     }
 
-    pub fn do_ntf_transfer_start(_proxy: Arc<Mutex<HubProxy>>, ev: NtfTransferStart) {
+    pub async fn do_ntf_transfer_start(_proxy: Arc<Mutex<HubProxy>>, ev: NtfTransferStart) {
+        trace!("do_hub_event ntf_transfer_start begin!");
 
+        let _proxy_clone = _proxy.clone();
+        let mut _p = _proxy.as_ref().lock().unwrap();
+        let _conn_mgr_arc = _p.get_conn_mgr();
+        let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
+        let entity_id = ev.entity_id.unwrap();
+        let entity_id_clone = entity_id.clone();
+        if let Some(_entity )= _conn_mgr.get_entity(entity_id) {
+            let _opt_main_conn_id = _entity.get_main_conn_id();
+            _entity.set_main_conn_id(None);
+            if let Some(main_conn_id) = _opt_main_conn_id {
+                _conn_mgr.kick_off_client(main_conn_id).await;
+            }
+        }
+        _conn_mgr.add_delay_hub_msg(DelayHubMsg::new(
+            _proxy_clone,
+            HubGateService::TransferMsgEnd(NtfTransferMsgEnd::new(entity_id_clone))
+        ))
     }
 }

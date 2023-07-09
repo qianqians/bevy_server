@@ -19,22 +19,23 @@ impl WSServer {
         let _join = tokio::spawn(async move {
             for request in server.filter_map(Result::ok) {
                 if !request.protocols().contains(&"websocket".to_string()) {
-                    request.reject().unwrap();
                     error!("ws protocol wrong!");
-                    return;
+                    request.reject().unwrap();
+                    continue;
                 }
 
                 let mut _client = request.use_protocol("websocket").accept().unwrap();
-                trace!("ws accept client ip:{}", _client.peer_addr().unwrap());
-
                 let ip = _client.peer_addr().unwrap();
+                let ip_clone = ip.clone();
+                trace!("ws accept client ip:{}", ip);
+
                 let (rd, wr) = _client.split().unwrap();
                 let mut _wr_arc = Arc::new(Mutex::new(wr));
                 let _wr_clone = _wr_arc.clone();
 
                 let _clone_h = _handle.clone();
                 let _clone_c = _close.clone();
-                f(_clone_h, _clone_c, WSReader::new(ip, rd, _wr_arc), WSWriter::new(_wr_clone));
+                f(_clone_h, _clone_c, WSReader::new(ip_clone, rd, _wr_arc), WSWriter::new(_wr_clone));
 
                 let _clone_close = _close.clone();
                 let _c_ref = _clone_close.as_ref().lock().unwrap();
