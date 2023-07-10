@@ -1,8 +1,13 @@
 use std::sync::{Mutex, Arc};
 use std::collections::BTreeMap;
-use queue::Queue;
 use tokio::task::JoinHandle;
 
+use tracing::{trace, error};
+
+use thrift::protocol::{TCompactOutputProtocol, TSerializable};
+use thrift::transport::{TIoChannel, TBufferChannel};
+
+use queue::Queue;
 use net::{NetReader, NetWriter};
 use tcp::tcp_server::TcpServer;
 use tcp::tcp_socket::{TcpReader, TcpWriter};
@@ -88,8 +93,7 @@ impl ClientProxy {
         self.wr.clone()
     }
 
-    pub fn send_client_msg(&mut self, ) {
-        let cb = DbCallback::CreateObject(AckCreateObject::new(self.callback_id.to_string(), result));
+    pub fn send_client_msg(&mut self, msg: ClientService) {
         let t = TBufferChannel::with_capacity(0, 1024);
         let (rd, wr) = match t.split() {
             Ok(_t) => (_t.0, _t.1),
@@ -99,8 +103,8 @@ impl ClientProxy {
             }
         };
         let mut o_prot = TCompactOutputProtocol::new(wr);
-        let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
-        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
+        let _ = ClientService::write_to_out_protocol(&msg, &mut o_prot);
+        let mut p_send = self.wr.as_ref().lock().unwrap();
         let _ = p_send.send(&rd.write_bytes());
     }
 }

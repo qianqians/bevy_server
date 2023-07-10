@@ -99,11 +99,11 @@ impl TSerializable for RegHub {
 }
 
 //
-// CreateRemoteEntity
+// HubCallClientCreateRemoteEntity
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct CreateRemoteEntity {
+pub struct HubCallClientCreateRemoteEntity {
   pub conn_id: Option<Vec<String>>,
   pub main_conn_id: Option<String>,
   pub entity_id: Option<String>,
@@ -111,9 +111,9 @@ pub struct CreateRemoteEntity {
   pub argvs: Option<Vec<u8>>,
 }
 
-impl CreateRemoteEntity {
-  pub fn new<F1, F2, F3, F4, F5>(conn_id: F1, main_conn_id: F2, entity_id: F3, entity_type: F4, argvs: F5) -> CreateRemoteEntity where F1: Into<Option<Vec<String>>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<String>>, F5: Into<Option<Vec<u8>>> {
-    CreateRemoteEntity {
+impl HubCallClientCreateRemoteEntity {
+  pub fn new<F1, F2, F3, F4, F5>(conn_id: F1, main_conn_id: F2, entity_id: F3, entity_type: F4, argvs: F5) -> HubCallClientCreateRemoteEntity where F1: Into<Option<Vec<String>>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<String>>, F5: Into<Option<Vec<u8>>> {
+    HubCallClientCreateRemoteEntity {
       conn_id: conn_id.into(),
       main_conn_id: main_conn_id.into(),
       entity_id: entity_id.into(),
@@ -123,8 +123,8 @@ impl CreateRemoteEntity {
   }
 }
 
-impl TSerializable for CreateRemoteEntity {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CreateRemoteEntity> {
+impl TSerializable for HubCallClientCreateRemoteEntity {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientCreateRemoteEntity> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<Vec<String>> = Some(Vec::new());
     let mut f_2: Option<String> = Some("".to_owned());
@@ -171,7 +171,7 @@ impl TSerializable for CreateRemoteEntity {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = CreateRemoteEntity {
+    let ret = HubCallClientCreateRemoteEntity {
       conn_id: f_1,
       main_conn_id: f_2,
       entity_id: f_3,
@@ -181,7 +181,7 @@ impl TSerializable for CreateRemoteEntity {
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("create_remote_entity");
+    let struct_ident = TStructIdentifier::new("hub_call_client_create_remote_entity");
     o_prot.write_struct_begin(&struct_ident)?;
     if let Some(ref fld_var) = self.conn_id {
       o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::List, 1))?;
@@ -711,7 +711,7 @@ impl TSerializable for HubCallKickOffClient {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum GateHubService {
   RegHub(RegHub),
-  CreateRemoteEntity(CreateRemoteEntity),
+  CreateRemoteEntity(HubCallClientCreateRemoteEntity),
   CallRpc(HubCallClientRpc),
   CallRsp(HubCallClientRsp),
   CallErr(HubCallClientErr),
@@ -741,7 +741,7 @@ impl TSerializable for GateHubService {
           received_field_count += 1;
         },
         2 => {
-          let val = CreateRemoteEntity::read_from_in_protocol(i_prot)?;
+          let val = HubCallClientCreateRemoteEntity::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CreateRemoteEntity(val));
           }

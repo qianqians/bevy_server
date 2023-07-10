@@ -8,7 +8,7 @@ use thrift::transport::{TBufferChannel};
 use proto::gate::{
     GateHubService, 
     RegHub,
-    CreateRemoteEntity, 
+    HubCallClientCreateRemoteEntity, 
     HubCallClientRpc, 
     HubCallClientRsp, 
     HubCallClientErr, 
@@ -20,6 +20,7 @@ use proto::gate::{
 
 use proto::client::{
     ClientService,
+    CreateRemoteEntity,
     KickOff,
     CallRpc,
     CallRsp,
@@ -96,7 +97,7 @@ impl GateHubMsgHandle {
         HubProxy::set_hub_info(_proxy, name, _type)
     }
 
-    pub async fn do_create_remote_entity(_proxy: Arc<Mutex<HubProxy>>, ev: CreateRemoteEntity) {
+    pub async fn do_create_remote_entity(_proxy: Arc<Mutex<HubProxy>>, ev: HubCallClientCreateRemoteEntity) {
         trace!("do_hub_event create_remote_entity begin!");
 
         let _proxy_clone = _proxy.clone();
@@ -105,6 +106,7 @@ impl GateHubMsgHandle {
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
         let entity_id = ev.entity_id.unwrap();
         let entity_id_clone = entity_id.clone();
+        let entity_id_tmp = entity_id.clone();
         let _entity = match _conn_mgr.get_entity(entity_id) {
             None => {
                 let entity_id_clone_tmp = entity_id_clone.clone();
@@ -114,13 +116,15 @@ impl GateHubMsgHandle {
             }
             Some(e) => e
         };
+        let entity_type = ev.entity_type.unwrap();
+        let argvs = ev.argvs.unwrap();
         if let Some(main_conn_id) = ev.main_conn_id {
-            if let Some(_client_arc) = _conn_mgr.get_client_proxy(main_conn_id) {
+            let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+            let main_conn_id_tmp = main_conn_id.clone();
+            if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(main_conn_id) {
                 let mut _client = _client_arc.as_ref().lock().unwrap();
-                let _client_wr_arc = _client.get_writer();
-                let _client_wr = _client_wr_arc.as_ref().lock().unwrap();
-                
-                //_entity.set_main_conn_id(Some(main_conn_id))
+                _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(entity_id_tmp, entity_type, true, argvs)));
+                _entity.set_main_conn_id(Some(main_conn_id_tmp));
             }
         }
         

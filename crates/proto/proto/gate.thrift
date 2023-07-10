@@ -12,7 +12,7 @@ struct reg_hub {
  * gate forward hub msg to client.
  * create remote entity in client.
  */
-struct create_remote_entity {
+struct hub_call_client_create_remote_entity {
 	1:list<string> conn_id,
 	2:string main_conn_id,
 	3:string entity_id,
@@ -77,7 +77,7 @@ struct hub_call_kick_off_client {
 
 union gate_hub_service {
 	1:reg_hub reg_hub,
-	2:create_remote_entity create_remote_entity,
+	2:hub_call_client_create_remote_entity create_remote_entity,
 	3:hub_call_client_rpc call_rpc,
 	4:hub_call_client_rsp call_rsp,
 	5:hub_call_client_err call_err,
