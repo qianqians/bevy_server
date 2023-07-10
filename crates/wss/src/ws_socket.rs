@@ -106,7 +106,7 @@ impl NetWriter for WSWriter {
     }
 
     async fn close(&mut self) {
-        let mut wr = self.wr.as_ref().lock().unwrap();
-        wr.shutdown_all();
+        let wr = self.wr.as_ref().lock().unwrap();
+        let _ = wr.shutdown_all();
     }
 }

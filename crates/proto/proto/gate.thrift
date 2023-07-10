@@ -19,6 +19,13 @@ struct hub_call_client_create_remote_entity {
 	4:string entity_type,
 	5:binary argvs
 }
+ 
+/*
+ * hub command delete entity
+ */
+struct hub_call_client_delete_remote_entity {
+	1:string entity_id
+}
 
 /*
  * hub send rpc msg to client.
@@ -78,13 +85,14 @@ struct hub_call_kick_off_client {
 union gate_hub_service {
 	1:reg_hub reg_hub,
 	2:hub_call_client_create_remote_entity create_remote_entity,
-	3:hub_call_client_rpc call_rpc,
-	4:hub_call_client_rsp call_rsp,
-	5:hub_call_client_err call_err,
-	6:hub_call_client_ntf call_ntf,
-	7:hub_call_client_group call_group,
-	8:hub_call_client_global call_global,
-	9:hub_call_kick_off_client kick_off
+	3:hub_call_client_delete_remote_entity delete_remote_entity,
+	4:hub_call_client_rpc call_rpc,
+	5:hub_call_client_rsp call_rsp,
+	6:hub_call_client_err call_err,
+	7:hub_call_client_ntf call_ntf,
+	8:hub_call_client_group call_group,
+	9:hub_call_client_global call_global,
+	10:hub_call_kick_off_client kick_off
 }
 
 /*

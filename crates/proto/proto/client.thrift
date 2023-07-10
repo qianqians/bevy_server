@@ -12,6 +12,13 @@ struct create_remote_entity {
 }
 
 /*
+ * hub command delete entity
+ */
+struct delete_remote_entity {
+	1:string entity_id
+}
+
+/*
  * gate forward hub msg kick_off client
  */
 struct kick_off {
@@ -48,9 +55,10 @@ struct call_ntf {
 
 union client_service {
 	1:create_remote_entity create_remote_entity,
-	2:kick_off kick_off,
-	3:call_rpc call_rpc,
-	4:call_rsp call_rsp,
-	5:call_err call_err,
-	6:call_ntf call_ntf
+	2:delete_remote_entity delete_remote_entity,
+	3:kick_off kick_off,
+	4:call_rpc call_rpc,
+	5:call_rsp call_rsp,
+	6:call_err call_err,
+	7:call_ntf call_ntf
 }

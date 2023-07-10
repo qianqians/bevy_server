@@ -28,6 +28,10 @@ impl Entity {
     pub fn add_conn_id(&mut self, id: String) {
         self.conn_ids.push(id)
     }
+
+    pub fn get_conn_ids(&self) -> &Vec<String> {
+        &self.conn_ids
+    }
 }
 
 pub struct EntityManager {
@@ -46,7 +50,11 @@ impl EntityManager {
         self.entities.insert(entity_id, e);
     }
 
-    pub fn get_entity(&mut self, entity_id: String) -> Option<&mut Entity> {
-        self.entities.get_mut(&entity_id)
+    pub fn get_entity(&mut self, entity_id: &String) -> Option<&mut Entity> {
+        self.entities.get_mut(entity_id)
+    }
+
+    pub fn delete_entity(&mut self, entity_id: &String) -> Option<Entity> {
+        self.entities.remove(entity_id)
     }
 }

@@ -218,6 +218,63 @@ impl TSerializable for HubCallClientCreateRemoteEntity {
 }
 
 //
+// HubCallClientDeleteRemoteEntity
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct HubCallClientDeleteRemoteEntity {
+  pub entity_id: Option<String>,
+}
+
+impl HubCallClientDeleteRemoteEntity {
+  pub fn new<F1>(entity_id: F1) -> HubCallClientDeleteRemoteEntity where F1: Into<Option<String>> {
+    HubCallClientDeleteRemoteEntity {
+      entity_id: entity_id.into(),
+    }
+  }
+}
+
+impl TSerializable for HubCallClientDeleteRemoteEntity {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientDeleteRemoteEntity> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubCallClientDeleteRemoteEntity {
+      entity_id: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("hub_call_client_delete_remote_entity");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // HubCallClientRpc
 //
 
@@ -712,6 +769,7 @@ impl TSerializable for HubCallKickOffClient {
 pub enum GateHubService {
   RegHub(RegHub),
   CreateRemoteEntity(HubCallClientCreateRemoteEntity),
+  DeleteRemoteEntity(HubCallClientDeleteRemoteEntity),
   CallRpc(HubCallClientRpc),
   CallRsp(HubCallClientRsp),
   CallErr(HubCallClientErr),
@@ -748,48 +806,55 @@ impl TSerializable for GateHubService {
           received_field_count += 1;
         },
         3 => {
+          let val = HubCallClientDeleteRemoteEntity::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(GateHubService::DeleteRemoteEntity(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
           let val = HubCallClientRpc::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallRpc(val));
           }
           received_field_count += 1;
         },
-        4 => {
+        5 => {
           let val = HubCallClientRsp::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallRsp(val));
           }
           received_field_count += 1;
         },
-        5 => {
+        6 => {
           let val = HubCallClientErr::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallErr(val));
           }
           received_field_count += 1;
         },
-        6 => {
+        7 => {
           let val = HubCallClientNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallNtf(val));
           }
           received_field_count += 1;
         },
-        7 => {
+        8 => {
           let val = HubCallClientGroup::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallGroup(val));
           }
           received_field_count += 1;
         },
-        8 => {
+        9 => {
           let val = HubCallClientGlobal::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallGlobal(val));
           }
           received_field_count += 1;
         },
-        9 => {
+        10 => {
           let val = HubCallKickOffClient::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::KickOff(val));
@@ -840,38 +905,43 @@ impl TSerializable for GateHubService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
+      GateHubService::DeleteRemoteEntity(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("delete_remote_entity", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
       GateHubService::CallRpc(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 4))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallRsp(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallErr(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 6))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallNtf(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 6))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 7))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallGroup(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_group", TType::Struct, 7))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_group", TType::Struct, 8))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallGlobal(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 8))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 9))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::KickOff(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 9))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 10))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

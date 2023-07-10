@@ -125,6 +125,63 @@ impl TSerializable for CreateRemoteEntity {
 }
 
 //
+// DeleteRemoteEntity
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct DeleteRemoteEntity {
+  pub entity_id: Option<String>,
+}
+
+impl DeleteRemoteEntity {
+  pub fn new<F1>(entity_id: F1) -> DeleteRemoteEntity where F1: Into<Option<String>> {
+    DeleteRemoteEntity {
+      entity_id: entity_id.into(),
+    }
+  }
+}
+
+impl TSerializable for DeleteRemoteEntity {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<DeleteRemoteEntity> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = DeleteRemoteEntity {
+      entity_id: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("delete_remote_entity");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // KickOff
 //
 
@@ -416,6 +473,7 @@ impl TSerializable for CallNtf {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum ClientService {
   CreateRemoteEntity(CreateRemoteEntity),
+  DeleteRemoteEntity(DeleteRemoteEntity),
   KickOff(KickOff),
   CallRpc(CallRpc),
   CallRsp(CallRsp),
@@ -443,34 +501,41 @@ impl TSerializable for ClientService {
           received_field_count += 1;
         },
         2 => {
+          let val = DeleteRemoteEntity::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::DeleteRemoteEntity(val));
+          }
+          received_field_count += 1;
+        },
+        3 => {
           let val = KickOff::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::KickOff(val));
           }
           received_field_count += 1;
         },
-        3 => {
+        4 => {
           let val = CallRpc::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallRpc(val));
           }
           received_field_count += 1;
         },
-        4 => {
+        5 => {
           let val = CallRsp::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallRsp(val));
           }
           received_field_count += 1;
         },
-        5 => {
+        6 => {
           let val = CallErr::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallErr(val));
           }
           received_field_count += 1;
         },
-        6 => {
+        7 => {
           let val = CallNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallNtf(val));
@@ -516,28 +581,33 @@ impl TSerializable for ClientService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
+      ClientService::DeleteRemoteEntity(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("delete_remote_entity", TType::Struct, 2))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
       ClientService::KickOff(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 2))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 3))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallRpc(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 4))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallRsp(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallErr(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 6))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       ClientService::CallNtf(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 6))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 7))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
