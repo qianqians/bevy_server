@@ -106,7 +106,8 @@ impl GateHubMsgHandle {
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
         let entity_id = ev.entity_id.unwrap();
         let entity_id_clone = entity_id.clone();
-        let entity_id_tmp = entity_id.clone();
+        let entity_id_tmp_main = entity_id.clone();
+        let entity_id_tmp_other = entity_id.clone();
         let _entity = match _conn_mgr.get_entity(entity_id) {
             None => {
                 let entity_id_clone_tmp = entity_id_clone.clone();
@@ -117,16 +118,31 @@ impl GateHubMsgHandle {
             Some(e) => e
         };
         let entity_type = ev.entity_type.unwrap();
+        let entity_type_other = entity_type.clone();
         let argvs = ev.argvs.unwrap();
+        let argvs_other = argvs.clone();
         if let Some(main_conn_id) = ev.main_conn_id {
             let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
             let main_conn_id_tmp = main_conn_id.clone();
             if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(main_conn_id) {
+                let entity_type_tmp = entity_type.clone();
+                let argvs_tmp = argvs.clone();
                 let mut _client = _client_arc.as_ref().lock().unwrap();
-                _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(entity_id_tmp, entity_type, true, argvs)));
+                _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(entity_id_tmp_main, entity_type_tmp, true, argvs_tmp)));
                 _entity.set_main_conn_id(Some(main_conn_id_tmp));
             }
         }
-        
+        if let Some(conn_dis) = ev.conn_id {
+            for id in conn_dis.iter() {
+                let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(id.to_string()) {
+                    let _entity_id_tmp = entity_id_tmp_other.clone();
+                    let entity_type_tmp = entity_type_other.clone();
+                    let argvs_tmp = argvs_other.clone();
+                    let mut _client = _client_arc.as_ref().lock().unwrap();
+                    _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(_entity_id_tmp, entity_type_tmp, false, argvs_tmp)))
+                }
+            }
+        }
     }
 }

@@ -140,7 +140,7 @@ impl ConnManager {
         self.clients.get(&conn_id)
     }
 
-    pub async fn kick_off_client(&mut self, conn_id: String) {
+    pub async fn close_client(&mut self, conn_id: String) {
         if let Some(client) = self.clients.remove(&conn_id) {
             let _c = client.as_ref().lock().unwrap();
             let mut _wr = _c.wr.as_ref().lock().unwrap();
