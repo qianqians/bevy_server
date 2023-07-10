@@ -6,13 +6,16 @@ include "common.thrift"
  */
 struct create_remote_entity {
 	1:string entity_id,
-	2:binary argvs
+	2:string entity_type,
+	3:bool is_main,
+	4:binary argvs
 }
 
 /*
  * gate forward hub msg kick_off client
  */
 struct kick_off {
+	1:string prompt_info
 }
 
 /*

@@ -12,6 +12,10 @@ use proto::hub::{
     HubGateService
 };
 
+use proto::client::{
+    ClientService,
+};
+
 use crate::hub_msg_handle::{HubEvent, GateHubMsgHandle};
 use crate::entity_manager::{Entity, EntityManager};
 
@@ -42,6 +46,10 @@ impl HubProxy {
 
         let mut _conn_mgr = _p.conn_mgr.as_ref().lock().unwrap();
         _conn_mgr.hubs.insert(_name_clone, _p_clone);
+    }
+
+    pub fn get_hub_name(&self) -> &String {
+        &self.name
     }
 
     pub fn get_msg_handle(&mut self) -> Arc<Mutex<GateHubMsgHandle>> {
@@ -75,6 +83,28 @@ pub struct ClientProxy {
     conn_mgr: Arc<Mutex<ConnManager>>
 }
 
+impl ClientProxy {
+    pub fn get_writer(&mut self) -> Arc<Mutex<Box<dyn NetWriter + Send + Sync + 'static>>> {
+        self.wr.clone()
+    }
+
+    pub fn send_client_msg(&mut self, ) {
+        let cb = DbCallback::CreateObject(AckCreateObject::new(self.callback_id.to_string(), result));
+        let t = TBufferChannel::with_capacity(0, 1024);
+        let (rd, wr) = match t.split() {
+            Ok(_t) => (_t.0, _t.1),
+            Err(_e) => {
+                error!("do_get_guid t.split error {}", _e);
+                return;
+            }
+        };
+        let mut o_prot = TCompactOutputProtocol::new(wr);
+        let _ = DbCallback::write_to_out_protocol(&cb, &mut o_prot);
+        let mut p_send = self.send_proxy.as_ref().lock().unwrap();
+        let _ = p_send.send(&rd.write_bytes());
+    }
+}
+
 pub struct ConnManager {
     hubs: BTreeMap<String, Arc<Mutex<HubProxy>>>,
     clients: BTreeMap<String, Arc<Mutex<ClientProxy>>>,
@@ -100,6 +130,10 @@ impl ConnManager {
 
     pub fn get_entity(&mut self, entity_id: String) -> Option<&mut Entity> {
         self.entities.get_entity(entity_id)
+    }
+
+    pub fn get_client_proxy(&mut self, conn_id: String) -> Option<&Arc<Mutex<ClientProxy>>> {
+        self.clients.get(&conn_id)
     }
 
     pub async fn kick_off_client(&mut self, conn_id: String) {

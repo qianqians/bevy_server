@@ -99,150 +99,25 @@ impl TSerializable for RegHub {
 }
 
 //
-// NtfTransferStart
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct NtfTransferStart {
-  pub entity_id: Option<String>,
-}
-
-impl NtfTransferStart {
-  pub fn new<F1>(entity_id: F1) -> NtfTransferStart where F1: Into<Option<String>> {
-    NtfTransferStart {
-      entity_id: entity_id.into(),
-    }
-  }
-}
-
-impl TSerializable for NtfTransferStart {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<NtfTransferStart> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = Some("".to_owned());
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = NtfTransferStart {
-      entity_id: f_1,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_transfer_start");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// NtfTransferComplete
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct NtfTransferComplete {
-  pub entity_id: Option<String>,
-  pub conn_id: Option<String>,
-}
-
-impl NtfTransferComplete {
-  pub fn new<F1, F2>(entity_id: F1, conn_id: F2) -> NtfTransferComplete where F1: Into<Option<String>>, F2: Into<Option<String>> {
-    NtfTransferComplete {
-      entity_id: entity_id.into(),
-      conn_id: conn_id.into(),
-    }
-  }
-}
-
-impl TSerializable for NtfTransferComplete {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<NtfTransferComplete> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = Some("".to_owned());
-    let mut f_2: Option<String> = Some("".to_owned());
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = NtfTransferComplete {
-      entity_id: f_1,
-      conn_id: f_2,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("ntf_transfer_complete");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(ref fld_var) = self.conn_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 2))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
 // CreateRemoteEntity
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CreateRemoteEntity {
   pub conn_id: Option<Vec<String>>,
+  pub main_conn_id: Option<String>,
   pub entity_id: Option<String>,
-  pub is_main: Option<bool>,
+  pub entity_type: Option<String>,
   pub argvs: Option<Vec<u8>>,
 }
 
 impl CreateRemoteEntity {
-  pub fn new<F1, F2, F3, F4>(conn_id: F1, entity_id: F2, is_main: F3, argvs: F4) -> CreateRemoteEntity where F1: Into<Option<Vec<String>>>, F2: Into<Option<String>>, F3: Into<Option<bool>>, F4: Into<Option<Vec<u8>>> {
+  pub fn new<F1, F2, F3, F4, F5>(conn_id: F1, main_conn_id: F2, entity_id: F3, entity_type: F4, argvs: F5) -> CreateRemoteEntity where F1: Into<Option<Vec<String>>>, F2: Into<Option<String>>, F3: Into<Option<String>>, F4: Into<Option<String>>, F5: Into<Option<Vec<u8>>> {
     CreateRemoteEntity {
       conn_id: conn_id.into(),
+      main_conn_id: main_conn_id.into(),
       entity_id: entity_id.into(),
-      is_main: is_main.into(),
+      entity_type: entity_type.into(),
       argvs: argvs.into(),
     }
   }
@@ -253,8 +128,9 @@ impl TSerializable for CreateRemoteEntity {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<Vec<String>> = Some(Vec::new());
     let mut f_2: Option<String> = Some("".to_owned());
-    let mut f_3: Option<bool> = Some(false);
-    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_3: Option<String> = Some("".to_owned());
+    let mut f_4: Option<String> = Some("".to_owned());
+    let mut f_5: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -277,12 +153,16 @@ impl TSerializable for CreateRemoteEntity {
           f_2 = Some(val);
         },
         3 => {
-          let val = i_prot.read_bool()?;
+          let val = i_prot.read_string()?;
           f_3 = Some(val);
         },
         4 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_4 = Some(val);
+        },
+        5 => {
+          let val = i_prot.read_bytes()?;
+          f_5 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -293,9 +173,10 @@ impl TSerializable for CreateRemoteEntity {
     i_prot.read_struct_end()?;
     let ret = CreateRemoteEntity {
       conn_id: f_1,
-      entity_id: f_2,
-      is_main: f_3,
-      argvs: f_4,
+      main_conn_id: f_2,
+      entity_id: f_3,
+      entity_type: f_4,
+      argvs: f_5,
     };
     Ok(ret)
   }
@@ -311,18 +192,23 @@ impl TSerializable for CreateRemoteEntity {
       o_prot.write_list_end()?;
       o_prot.write_field_end()?
     }
-    if let Some(ref fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 2))?;
+    if let Some(ref fld_var) = self.main_conn_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("main_conn_id", TType::String, 2))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
-    if let Some(fld_var) = self.is_main {
-      o_prot.write_field_begin(&TFieldIdentifier::new("is_main", TType::Bool, 3))?;
-      o_prot.write_bool(fld_var)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 3))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.entity_type {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_type", TType::String, 4))?;
+      o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
     if let Some(ref fld_var) = self.argvs {
-      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 4))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 5))?;
       o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
     }
@@ -755,12 +641,14 @@ impl TSerializable for HubCallClientGlobal {
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct HubCallKickOffClient {
   pub conn_id: Option<String>,
+  pub prompt_info: Option<String>,
 }
 
 impl HubCallKickOffClient {
-  pub fn new<F1>(conn_id: F1) -> HubCallKickOffClient where F1: Into<Option<String>> {
+  pub fn new<F1, F2>(conn_id: F1, prompt_info: F2) -> HubCallKickOffClient where F1: Into<Option<String>>, F2: Into<Option<String>> {
     HubCallKickOffClient {
       conn_id: conn_id.into(),
+      prompt_info: prompt_info.into(),
     }
   }
 }
@@ -769,6 +657,7 @@ impl TSerializable for HubCallKickOffClient {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallKickOffClient> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<String> = Some("".to_owned());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -780,6 +669,10 @@ impl TSerializable for HubCallKickOffClient {
           let val = i_prot.read_string()?;
           f_1 = Some(val);
         },
+        2 => {
+          let val = i_prot.read_string()?;
+          f_2 = Some(val);
+        },
         _ => {
           i_prot.skip(field_ident.field_type)?;
         },
@@ -789,6 +682,7 @@ impl TSerializable for HubCallKickOffClient {
     i_prot.read_struct_end()?;
     let ret = HubCallKickOffClient {
       conn_id: f_1,
+      prompt_info: f_2,
     };
     Ok(ret)
   }
@@ -797,6 +691,11 @@ impl TSerializable for HubCallKickOffClient {
     o_prot.write_struct_begin(&struct_ident)?;
     if let Some(ref fld_var) = self.conn_id {
       o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.prompt_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("prompt_info", TType::String, 2))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
@@ -812,8 +711,6 @@ impl TSerializable for HubCallKickOffClient {
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum GateHubService {
   RegHub(RegHub),
-  TransferStart(NtfTransferStart),
-  TransferComplete(NtfTransferComplete),
   CreateRemoteEntity(CreateRemoteEntity),
   CallRpc(HubCallClientRpc),
   CallRsp(HubCallClientRsp),
@@ -844,69 +741,55 @@ impl TSerializable for GateHubService {
           received_field_count += 1;
         },
         2 => {
-          let val = NtfTransferStart::read_from_in_protocol(i_prot)?;
-          if ret.is_none() {
-            ret = Some(GateHubService::TransferStart(val));
-          }
-          received_field_count += 1;
-        },
-        3 => {
-          let val = NtfTransferComplete::read_from_in_protocol(i_prot)?;
-          if ret.is_none() {
-            ret = Some(GateHubService::TransferComplete(val));
-          }
-          received_field_count += 1;
-        },
-        4 => {
           let val = CreateRemoteEntity::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CreateRemoteEntity(val));
           }
           received_field_count += 1;
         },
-        5 => {
+        3 => {
           let val = HubCallClientRpc::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallRpc(val));
           }
           received_field_count += 1;
         },
-        6 => {
+        4 => {
           let val = HubCallClientRsp::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallRsp(val));
           }
           received_field_count += 1;
         },
-        7 => {
+        5 => {
           let val = HubCallClientErr::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallErr(val));
           }
           received_field_count += 1;
         },
-        8 => {
+        6 => {
           let val = HubCallClientNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallNtf(val));
           }
           received_field_count += 1;
         },
-        9 => {
+        7 => {
           let val = HubCallClientGroup::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallGroup(val));
           }
           received_field_count += 1;
         },
-        10 => {
+        8 => {
           let val = HubCallClientGlobal::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::CallGlobal(val));
           }
           received_field_count += 1;
         },
-        11 => {
+        9 => {
           let val = HubCallKickOffClient::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::KickOff(val));
@@ -952,53 +835,43 @@ impl TSerializable for GateHubService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
-      GateHubService::TransferStart(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("transfer_start", TType::Struct, 2))?;
-        f.write_to_out_protocol(o_prot)?;
-        o_prot.write_field_end()?;
-      },
-      GateHubService::TransferComplete(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("transfer_complete", TType::Struct, 3))?;
-        f.write_to_out_protocol(o_prot)?;
-        o_prot.write_field_end()?;
-      },
       GateHubService::CreateRemoteEntity(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("create_remote_entity", TType::Struct, 4))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("create_remote_entity", TType::Struct, 2))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallRpc(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 5))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallRsp(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 6))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallErr(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 7))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallNtf(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 8))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 6))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallGroup(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_group", TType::Struct, 9))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_group", TType::Struct, 7))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::CallGlobal(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 10))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 8))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       GateHubService::KickOff(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 11))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 9))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

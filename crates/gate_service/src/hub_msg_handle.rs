@@ -7,20 +7,20 @@ use thrift::transport::{TBufferChannel};
 
 use proto::gate::{
     GateHubService, 
-    RegHub, 
-    NtfTransferStart, 
-    NtfTransferComplete, 
+    RegHub,
     CreateRemoteEntity, 
     HubCallClientRpc, 
     HubCallClientRsp, 
     HubCallClientErr, 
     HubCallClientNtf,
     HubCallClientGroup, 
-    HubCallClientGlobal
+    HubCallClientGlobal,
+    HubCallKickOffClient
 };
 
 use proto::client::{
     ClientService,
+    KickOff,
     CallRpc,
     CallRsp,
     CallErr,
@@ -35,6 +35,7 @@ use proto::hub::{
 use tcp::tcp_socket::{TcpReader, TcpWriter};
 use queue::Queue;
 
+use crate::entity_manager::Entity;
 use crate::gate_service::{DelayHubMsg, ConnManager, HubProxy};
 
 pub struct HubEvent {
@@ -95,8 +96,8 @@ impl GateHubMsgHandle {
         HubProxy::set_hub_info(_proxy, name, _type)
     }
 
-    pub async fn do_ntf_transfer_start(_proxy: Arc<Mutex<HubProxy>>, ev: NtfTransferStart) {
-        trace!("do_hub_event ntf_transfer_start begin!");
+    pub async fn do_create_remote_entity(_proxy: Arc<Mutex<HubProxy>>, ev: CreateRemoteEntity) {
+        trace!("do_hub_event create_remote_entity begin!");
 
         let _proxy_clone = _proxy.clone();
         let mut _p = _proxy.as_ref().lock().unwrap();
@@ -104,16 +105,24 @@ impl GateHubMsgHandle {
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
         let entity_id = ev.entity_id.unwrap();
         let entity_id_clone = entity_id.clone();
-        if let Some(_entity )= _conn_mgr.get_entity(entity_id) {
-            let _opt_main_conn_id = _entity.get_main_conn_id();
-            _entity.set_main_conn_id(None);
-            if let Some(main_conn_id) = _opt_main_conn_id {
-                _conn_mgr.kick_off_client(main_conn_id).await;
+        let _entity = match _conn_mgr.get_entity(entity_id) {
+            None => {
+                let entity_id_clone_tmp = entity_id_clone.clone();
+                let e = Entity::new(entity_id_clone, _p.get_hub_name().to_string());
+                _conn_mgr.update_entity(e);
+                _conn_mgr.get_entity(entity_id_clone_tmp).unwrap()
+            }
+            Some(e) => e
+        };
+        if let Some(main_conn_id) = ev.main_conn_id {
+            if let Some(_client_arc) = _conn_mgr.get_client_proxy(main_conn_id) {
+                let mut _client = _client_arc.as_ref().lock().unwrap();
+                let _client_wr_arc = _client.get_writer();
+                let _client_wr = _client_wr_arc.as_ref().lock().unwrap();
+                
+                //_entity.set_main_conn_id(Some(main_conn_id))
             }
         }
-        _conn_mgr.add_delay_hub_msg(DelayHubMsg::new(
-            _proxy_clone,
-            HubGateService::TransferMsgEnd(NtfTransferMsgEnd::new(entity_id_clone))
-        ))
+        
     }
 }

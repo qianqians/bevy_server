@@ -9,29 +9,15 @@ struct reg_hub {
 }
 
 /*
- * notify entity last connected gate, transfer entity control, gate stopped accept msg from old client.
- */
-struct ntf_transfer_start {
-	1:string entity_id
-}
-
-/*
- * notify gate obtain entity control with connection id(conn_id).
- */
-struct ntf_transfer_complete {
-	1:string entity_id,
-	2:string conn_id
-}
-
-/*
  * gate forward hub msg to client.
  * create remote entity in client.
  */
 struct create_remote_entity {
 	1:list<string> conn_id,
-	2:string entity_id,
-	3:bool is_main,
-	4:binary argvs
+	2:string main_conn_id,
+	3:string entity_id,
+	4:string entity_type,
+	5:binary argvs
 }
 
 /*
@@ -85,21 +71,20 @@ struct hub_call_client_global {
  * hub request kick off client.
  */
 struct hub_call_kick_off_client {
-	1:string conn_id
+	1:string conn_id,
+	2:string prompt_info
 }
 
 union gate_hub_service {
 	1:reg_hub reg_hub,
-	2:ntf_transfer_start transfer_start,
-	3:ntf_transfer_complete transfer_complete,
-	4:create_remote_entity create_remote_entity,
-	5:hub_call_client_rpc call_rpc,
-	6:hub_call_client_rsp call_rsp,
-	7:hub_call_client_err call_err,
-	8:hub_call_client_ntf call_ntf,
-	9:hub_call_client_group call_group,
-	10:hub_call_client_global call_global,
-	11:hub_call_kick_off_client kick_off
+	2:create_remote_entity create_remote_entity,
+	3:hub_call_client_rpc call_rpc,
+	4:hub_call_client_rsp call_rsp,
+	5:hub_call_client_err call_err,
+	6:hub_call_client_ntf call_ntf,
+	7:hub_call_client_group call_group,
+	8:hub_call_client_global call_global,
+	9:hub_call_kick_off_client kick_off
 }
 
 /*

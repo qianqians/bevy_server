@@ -35,13 +35,17 @@ use crate::common;
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CreateRemoteEntity {
   pub entity_id: Option<String>,
+  pub entity_type: Option<String>,
+  pub is_main: Option<bool>,
   pub argvs: Option<Vec<u8>>,
 }
 
 impl CreateRemoteEntity {
-  pub fn new<F1, F2>(entity_id: F1, argvs: F2) -> CreateRemoteEntity where F1: Into<Option<String>>, F2: Into<Option<Vec<u8>>> {
+  pub fn new<F1, F2, F3, F4>(entity_id: F1, entity_type: F2, is_main: F3, argvs: F4) -> CreateRemoteEntity where F1: Into<Option<String>>, F2: Into<Option<String>>, F3: Into<Option<bool>>, F4: Into<Option<Vec<u8>>> {
     CreateRemoteEntity {
       entity_id: entity_id.into(),
+      entity_type: entity_type.into(),
+      is_main: is_main.into(),
       argvs: argvs.into(),
     }
   }
@@ -51,7 +55,9 @@ impl TSerializable for CreateRemoteEntity {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CreateRemoteEntity> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = Some("".to_owned());
-    let mut f_2: Option<Vec<u8>> = Some(Vec::new());
+    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_3: Option<bool> = Some(false);
+    let mut f_4: Option<Vec<u8>> = Some(Vec::new());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -64,8 +70,16 @@ impl TSerializable for CreateRemoteEntity {
           f_1 = Some(val);
         },
         2 => {
-          let val = i_prot.read_bytes()?;
+          let val = i_prot.read_string()?;
           f_2 = Some(val);
+        },
+        3 => {
+          let val = i_prot.read_bool()?;
+          f_3 = Some(val);
+        },
+        4 => {
+          let val = i_prot.read_bytes()?;
+          f_4 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -76,7 +90,9 @@ impl TSerializable for CreateRemoteEntity {
     i_prot.read_struct_end()?;
     let ret = CreateRemoteEntity {
       entity_id: f_1,
-      argvs: f_2,
+      entity_type: f_2,
+      is_main: f_3,
+      argvs: f_4,
     };
     Ok(ret)
   }
@@ -88,8 +104,18 @@ impl TSerializable for CreateRemoteEntity {
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
+    if let Some(ref fld_var) = self.entity_type {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_type", TType::String, 2))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.is_main {
+      o_prot.write_field_begin(&TFieldIdentifier::new("is_main", TType::Bool, 3))?;
+      o_prot.write_bool(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.argvs {
-      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 2))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 4))?;
       o_prot.write_bytes(fld_var)?;
       o_prot.write_field_end()?
     }
@@ -104,32 +130,52 @@ impl TSerializable for CreateRemoteEntity {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct KickOff {
+  pub prompt_info: Option<String>,
 }
 
 impl KickOff {
-  pub fn new() -> KickOff {
-    KickOff {}
+  pub fn new<F1>(prompt_info: F1) -> KickOff where F1: Into<Option<String>> {
+    KickOff {
+      prompt_info: prompt_info.into(),
+    }
   }
 }
 
 impl TSerializable for KickOff {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<KickOff> {
     i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
         break;
       }
-      i_prot.skip(field_ident.field_type)?;
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = KickOff {};
+    let ret = KickOff {
+      prompt_info: f_1,
+    };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("kick_off");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.prompt_info {
+      o_prot.write_field_begin(&TFieldIdentifier::new("prompt_info", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
