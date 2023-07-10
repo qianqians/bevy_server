@@ -24,6 +24,10 @@ impl Entity {
     pub fn get_main_conn_id(&self) -> Option<String> {
         self.main_conn_id.clone()
     }
+
+    pub fn add_conn_id(&mut self, id: String) {
+        self.conn_ids.push(id)
+    }
 }
 
 pub struct EntityManager {

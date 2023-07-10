@@ -140,7 +140,8 @@ impl GateHubMsgHandle {
                     let entity_type_tmp = entity_type_other.clone();
                     let argvs_tmp = argvs_other.clone();
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(_entity_id_tmp, entity_type_tmp, false, argvs_tmp)))
+                    _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(_entity_id_tmp, entity_type_tmp, false, argvs_tmp)));
+                    _entity.add_conn_id(id.to_string())
                 }
             }
         }
