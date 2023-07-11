@@ -31,7 +31,9 @@ struct hub_call_client_delete_remote_entity {
  * hub send rpc msg to client.
  */
 struct hub_call_client_rpc {
-	1:common.msg message
+	1:string entity_id,
+	2:i64 msg_cb_id,
+	3:common.msg message
 }
 
 /*
@@ -52,7 +54,8 @@ struct hub_call_client_err {
  * hub send ntf msg to client.
  */
 struct hub_call_client_ntf {
-	1:common.msg message
+	1:string entity_id,
+	2:common.msg message
 }
 
 /*
@@ -60,18 +63,14 @@ struct hub_call_client_ntf {
  */
 struct hub_call_client_group {
 	1:list<string> entity_id,
-	2:string method,
-	3:binary argvs,
-	4:bool is_in_order
+	2:common.msg message
 }
 
 /*
  * hub send global msg to client.
  */
 struct hub_call_client_global {
-	1:string method,
-	2:binary argvs,
-	3:bool is_in_order
+	1:common.msg message
 }
 
 /*

@@ -182,6 +182,43 @@ impl TSerializable for DeleteRemoteEntity {
 }
 
 //
+// ReconnectServerComplete
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct ReconnectServerComplete {
+}
+
+impl ReconnectServerComplete {
+  pub fn new() -> ReconnectServerComplete {
+    ReconnectServerComplete {}
+  }
+}
+
+impl TSerializable for ReconnectServerComplete {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ReconnectServerComplete> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = ReconnectServerComplete {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("reconnect_server_complete");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // KickOff
 //
 
@@ -244,12 +281,16 @@ impl TSerializable for KickOff {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CallRpc {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
   pub message: Option<common::Msg>,
 }
 
 impl CallRpc {
-  pub fn new<F1>(message: F1) -> CallRpc where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2, F3>(entity_id: F1, msg_cb_id: F2, message: F3) -> CallRpc where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<common::Msg>> {
     CallRpc {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
       message: message.into(),
     }
   }
@@ -258,7 +299,9 @@ impl CallRpc {
 impl TSerializable for CallRpc {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRpc> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<common::Msg> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -267,8 +310,16 @@ impl TSerializable for CallRpc {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -278,15 +329,27 @@ impl TSerializable for CallRpc {
     }
     i_prot.read_struct_end()?;
     let ret = CallRpc {
-      message: f_1,
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      message: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("call_rpc");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 3))?;
       fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
@@ -415,12 +478,14 @@ impl TSerializable for CallErr {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CallNtf {
+  pub entity_id: Option<String>,
   pub message: Option<common::Msg>,
 }
 
 impl CallNtf {
-  pub fn new<F1>(message: F1) -> CallNtf where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2>(entity_id: F1, message: F2) -> CallNtf where F1: Into<Option<String>>, F2: Into<Option<common::Msg>> {
     CallNtf {
+      entity_id: entity_id.into(),
       message: message.into(),
     }
   }
@@ -428,6 +493,74 @@ impl CallNtf {
 
 impl TSerializable for CallNtf {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallNtf> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallNtf {
+      entity_id: f_1,
+      message: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_ntf");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 2))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CallGlobal
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallGlobal {
+  pub message: Option<common::Msg>,
+}
+
+impl CallGlobal {
+  pub fn new<F1>(message: F1) -> CallGlobal where F1: Into<Option<common::Msg>> {
+    CallGlobal {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallGlobal {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallGlobal> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::Msg> = None;
     loop {
@@ -448,56 +581,19 @@ impl TSerializable for CallNtf {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = CallNtf {
+    let ret = CallGlobal {
       message: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_ntf");
+    let struct_ident = TStructIdentifier::new("call_global");
     o_prot.write_struct_begin(&struct_ident)?;
     if let Some(ref fld_var) = self.message {
       o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
       fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ReconnectServerComplete
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct ReconnectServerComplete {
-}
-
-impl ReconnectServerComplete {
-  pub fn new() -> ReconnectServerComplete {
-    ReconnectServerComplete {}
-  }
-}
-
-impl TSerializable for ReconnectServerComplete {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ReconnectServerComplete> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = ReconnectServerComplete {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("reconnect_server_complete");
-    o_prot.write_struct_begin(&struct_ident)?;
     o_prot.write_field_stop()?;
     o_prot.write_struct_end()
   }
@@ -517,6 +613,7 @@ pub enum ClientService {
   CallRsp(CallRsp),
   CallErr(CallErr),
   CallNtf(CallNtf),
+  CallGlobal(CallGlobal),
 }
 
 impl TSerializable for ClientService {
@@ -584,6 +681,13 @@ impl TSerializable for ClientService {
           let val = CallNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallNtf(val));
+          }
+          received_field_count += 1;
+        },
+        9 => {
+          let val = CallGlobal::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::CallGlobal(val));
           }
           received_field_count += 1;
         },
@@ -658,6 +762,11 @@ impl TSerializable for ClientService {
       },
       ClientService::CallNtf(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 8))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::CallGlobal(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 9))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

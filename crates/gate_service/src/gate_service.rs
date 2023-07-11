@@ -89,6 +89,10 @@ pub struct ClientProxy {
 }
 
 impl ClientProxy {
+    pub fn get_conn_id(&self) -> String {
+        self.conn_id.clone()
+    }
+
     pub fn get_writer(&mut self) -> Arc<Mutex<Box<dyn NetWriter + Send + Sync + 'static>>> {
         self.wr.clone()
     }
@@ -146,6 +150,11 @@ impl ConnManager {
 
     pub fn delete_client_proxy(&mut self, conn_id: &String) {
         let _ = self.clients.remove(conn_id);
+    }
+
+    pub fn get_all_client_proxy(&mut self) -> Vec<Arc<Mutex<ClientProxy>>> {
+        let _client_clone = self.clients.clone();
+        _client_clone.into_values().collect()
     }
 
     pub async fn close_client(&mut self, conn_id: &String) {

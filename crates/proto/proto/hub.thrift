@@ -21,7 +21,9 @@ struct ntf_transfer_msg_end {
  * client call rpc to hub.
  */
 struct call_rpc {
-	1:common.msg message
+	1:string entity_id,
+	2:i64 msg_cb_id,
+	3:common.msg message
 }
 
 /*

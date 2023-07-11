@@ -187,12 +187,16 @@ impl TSerializable for NtfTransferMsgEnd {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct CallRpc {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
   pub message: Option<common::Msg>,
 }
 
 impl CallRpc {
-  pub fn new<F1>(message: F1) -> CallRpc where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2, F3>(entity_id: F1, msg_cb_id: F2, message: F3) -> CallRpc where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<common::Msg>> {
     CallRpc {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
       message: message.into(),
     }
   }
@@ -201,7 +205,9 @@ impl CallRpc {
 impl TSerializable for CallRpc {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallRpc> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<common::Msg> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -210,8 +216,16 @@ impl TSerializable for CallRpc {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -221,15 +235,27 @@ impl TSerializable for CallRpc {
     }
     i_prot.read_struct_end()?;
     let ret = CallRpc {
-      message: f_1,
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      message: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("call_rpc");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 3))?;
       fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }

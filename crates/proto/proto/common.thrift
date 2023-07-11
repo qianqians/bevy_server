@@ -1,10 +1,8 @@
 
 struct msg {
-	1:string entity_id,
-	2:string method,
-	3:binary argvs,
-	4:i64 msg_cb_id,
-	5:bool is_in_order
+	1:string method,
+	2:binary argvs,
+	3:bool is_in_order
 }
 
 struct rpc_rsp {

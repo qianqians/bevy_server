@@ -16,18 +16,22 @@ use proto::gate::{
     HubCallClientNtf,
     HubCallClientGroup, 
     HubCallClientGlobal,
-    HubCallKickOffClient
+    HubCallKickOffClient,
+    HubCallTransferClient,
+    HubCallTransferClientComplete
 };
 
 use proto::client::{
     ClientService,
     CreateRemoteEntity,
     DeleteRemoteEntity,
+    ReconnectServerComplete,
     KickOff,
     CallRpc,
     CallRsp,
     CallErr,
-    CallNtf
+    CallNtf,
+    CallGlobal
 };
 
 use proto::hub::{
@@ -202,17 +206,16 @@ impl GateHubMsgHandle {
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
 
         let event = ev.message.unwrap();
-        let event_tmp_main = event.clone();
-        let entity_id = event.entity_id.unwrap();
+        let entity_id = ev.entity_id.unwrap();
+        let msg_cb_id = ev.msg_cb_id.unwrap();
         if let Some(_entity) = _conn_mgr.get_entity(&entity_id) {
             if let Some(main_conn_id) = _entity.get_main_conn_id() {
                 let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
                 if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(&main_conn_id) {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(event_tmp_main))).await {
+                    if !_client.send_client_msg(ClientService::CallRpc(CallRpc::new(entity_id, msg_cb_id, event))).await {
                         _entity.set_main_conn_id(None);
-                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
-                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
+                        _conn_mgr.delete_client_proxy(&main_conn_id);
                     }
                 }
             }
@@ -276,17 +279,18 @@ impl GateHubMsgHandle {
         let _conn_mgr_arc = _p.get_conn_mgr();
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
 
+        let entity_id = ev.entity_id.unwrap();
+        let entity_id_clone = entity_id.clone();
         let event = ev.message.unwrap();
         let event_tmp_main = event.clone();
         let event_tmp_other = event.clone();
-        let entity_id = event.entity_id.unwrap();
         if let Some(_entity) = _conn_mgr.get_entity(&entity_id) {
             let mut invalid_ids: Vec<String> = vec![];
             if let Some(main_conn_id) = _entity.get_main_conn_id() {
                 let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
                 if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(&main_conn_id) {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(event_tmp_main))).await {
+                    if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(entity_id, event_tmp_main))).await {
                         _entity.set_main_conn_id(None);
                         let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
                         _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
@@ -298,7 +302,8 @@ impl GateHubMsgHandle {
                 if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(id) {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
                     let _event_tmp_other = event_tmp_other.clone();
-                    if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(_event_tmp_other))).await {
+                    let _entity_id_tmp = entity_id_clone.clone();
+                    if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(_entity_id_tmp, _event_tmp_other))).await {
                         invalid_ids.push(id.to_string());
                         let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
                         _conn_mgr_tmp.delete_client_proxy(id);
@@ -310,6 +315,73 @@ impl GateHubMsgHandle {
             }
             for invalid_id in invalid_ids.iter() {
                 _entity.delete_conn_id(invalid_id);
+            }
+        }
+    }
+
+    pub async fn do_call_client_group(_proxy: Arc<Mutex<HubProxy>>, ev: HubCallClientGroup) {
+        trace!("do_hub_event call_client_group begin!");
+
+        let mut _p = _proxy.as_ref().lock().unwrap();
+        let _conn_mgr_arc = _p.get_conn_mgr();
+        let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
+
+        let event = ev.message.unwrap();
+        let event_tmp_main = event.clone();
+        let event_tmp_other = event.clone();
+        let entity_ids = ev.entity_id.unwrap();
+        for id in entity_ids.iter() {
+            if let Some(_entity) = _conn_mgr.get_entity(&id) {
+                let mut invalid_ids: Vec<String> = vec![];
+                if let Some(main_conn_id) = _entity.get_main_conn_id() {
+                    let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                    if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(&main_conn_id) {
+                        let mut _client = _client_arc.as_ref().lock().unwrap();
+                        let _event_tmp_main = event_tmp_main.clone();
+                        if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(id.to_string(), _event_tmp_main))).await {
+                            _entity.set_main_conn_id(None);
+                            let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                            _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
+                        }
+                    }
+                }
+                for id in _entity.get_conn_ids().iter() {
+                    let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                    if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(id) {
+                        let mut _client = _client_arc.as_ref().lock().unwrap();
+                        let _event_tmp_other = event_tmp_other.clone();
+                        let _entity_id_tmp = id.clone();
+                        if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(_entity_id_tmp, _event_tmp_other))).await {
+                            invalid_ids.push(id.to_string());
+                            let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                            _conn_mgr_tmp.delete_client_proxy(id);
+                        }
+                    }
+                    else {
+                        invalid_ids.push(id.to_string());
+                    }
+                }
+                for invalid_id in invalid_ids.iter() {
+                    _entity.delete_conn_id(invalid_id);
+                }
+            }
+        }
+    }
+    
+    pub async fn do_call_client_global(_proxy: Arc<Mutex<HubProxy>>, ev: HubCallClientGlobal) {
+        trace!("do_hub_event call_client_global begin!");
+
+        let mut _p = _proxy.as_ref().lock().unwrap();
+        let _conn_mgr_arc = _p.get_conn_mgr();
+        let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
+        
+        let event = ev.message.unwrap();
+        let _clients = _conn_mgr.get_all_client_proxy();
+        for _client_arc in _clients.iter() {
+            let mut _client = _client_arc.as_ref().lock().unwrap();
+            let _event_tmp = event.clone();
+            if !_client.send_client_msg(ClientService::CallGlobal(CallGlobal::new(_event_tmp))).await {
+                _conn_mgr.delete_client_proxy(&_client.get_conn_id())
             }
         }
     }

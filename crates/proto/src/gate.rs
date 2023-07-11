@@ -280,12 +280,16 @@ impl TSerializable for HubCallClientDeleteRemoteEntity {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct HubCallClientRpc {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
   pub message: Option<common::Msg>,
 }
 
 impl HubCallClientRpc {
-  pub fn new<F1>(message: F1) -> HubCallClientRpc where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2, F3>(entity_id: F1, msg_cb_id: F2, message: F3) -> HubCallClientRpc where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<common::Msg>> {
     HubCallClientRpc {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
       message: message.into(),
     }
   }
@@ -294,7 +298,9 @@ impl HubCallClientRpc {
 impl TSerializable for HubCallClientRpc {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientRpc> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<common::Msg> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -303,8 +309,16 @@ impl TSerializable for HubCallClientRpc {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -314,15 +328,27 @@ impl TSerializable for HubCallClientRpc {
     }
     i_prot.read_struct_end()?;
     let ret = HubCallClientRpc {
-      message: f_1,
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      message: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("hub_call_client_rpc");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 3))?;
       fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
@@ -451,12 +477,14 @@ impl TSerializable for HubCallClientErr {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct HubCallClientNtf {
+  pub entity_id: Option<String>,
   pub message: Option<common::Msg>,
 }
 
 impl HubCallClientNtf {
-  pub fn new<F1>(message: F1) -> HubCallClientNtf where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2>(entity_id: F1, message: F2) -> HubCallClientNtf where F1: Into<Option<String>>, F2: Into<Option<common::Msg>> {
     HubCallClientNtf {
+      entity_id: entity_id.into(),
       message: message.into(),
     }
   }
@@ -464,6 +492,154 @@ impl HubCallClientNtf {
 
 impl TSerializable for HubCallClientNtf {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientNtf> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubCallClientNtf {
+      entity_id: f_1,
+      message: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("hub_call_client_ntf");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 2))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubCallClientGroup
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct HubCallClientGroup {
+  pub entity_id: Option<Vec<String>>,
+  pub message: Option<common::Msg>,
+}
+
+impl HubCallClientGroup {
+  pub fn new<F1, F2>(entity_id: F1, message: F2) -> HubCallClientGroup where F1: Into<Option<Vec<String>>>, F2: Into<Option<common::Msg>> {
+    HubCallClientGroup {
+      entity_id: entity_id.into(),
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for HubCallClientGroup {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientGroup> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<Vec<String>> = Some(Vec::new());
+    let mut f_2: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let list_ident = i_prot.read_list_begin()?;
+          let mut val: Vec<String> = Vec::with_capacity(list_ident.size as usize);
+          for _ in 0..list_ident.size {
+            let list_elem_1 = i_prot.read_string()?;
+            val.push(list_elem_1);
+          }
+          i_prot.read_list_end()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = HubCallClientGroup {
+      entity_id: f_1,
+      message: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("hub_call_client_group");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::List, 1))?;
+      o_prot.write_list_begin(&TListIdentifier::new(TType::String, fld_var.len() as i32))?;
+      for e in fld_var {
+        o_prot.write_string(e)?;
+      }
+      o_prot.write_list_end()?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 2))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// HubCallClientGlobal
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct HubCallClientGlobal {
+  pub message: Option<common::Msg>,
+}
+
+impl HubCallClientGlobal {
+  pub fn new<F1>(message: F1) -> HubCallClientGlobal where F1: Into<Option<common::Msg>> {
+    HubCallClientGlobal {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for HubCallClientGlobal {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientGlobal> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<common::Msg> = None;
     loop {
@@ -484,206 +660,17 @@ impl TSerializable for HubCallClientNtf {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = HubCallClientNtf {
-      message: f_1,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("hub_call_client_ntf");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
-      fld_var.write_to_out_protocol(o_prot)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubCallClientGroup
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct HubCallClientGroup {
-  pub entity_id: Option<Vec<String>>,
-  pub method: Option<String>,
-  pub argvs: Option<Vec<u8>>,
-  pub is_in_order: Option<bool>,
-}
-
-impl HubCallClientGroup {
-  pub fn new<F1, F2, F3, F4>(entity_id: F1, method: F2, argvs: F3, is_in_order: F4) -> HubCallClientGroup where F1: Into<Option<Vec<String>>>, F2: Into<Option<String>>, F3: Into<Option<Vec<u8>>>, F4: Into<Option<bool>> {
-    HubCallClientGroup {
-      entity_id: entity_id.into(),
-      method: method.into(),
-      argvs: argvs.into(),
-      is_in_order: is_in_order.into(),
-    }
-  }
-}
-
-impl TSerializable for HubCallClientGroup {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientGroup> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<Vec<String>> = Some(Vec::new());
-    let mut f_2: Option<String> = Some("".to_owned());
-    let mut f_3: Option<Vec<u8>> = Some(Vec::new());
-    let mut f_4: Option<bool> = Some(false);
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let list_ident = i_prot.read_list_begin()?;
-          let mut val: Vec<String> = Vec::with_capacity(list_ident.size as usize);
-          for _ in 0..list_ident.size {
-            let list_elem_1 = i_prot.read_string()?;
-            val.push(list_elem_1);
-          }
-          i_prot.read_list_end()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_string()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_bytes()?;
-          f_3 = Some(val);
-        },
-        4 => {
-          let val = i_prot.read_bool()?;
-          f_4 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubCallClientGroup {
-      entity_id: f_1,
-      method: f_2,
-      argvs: f_3,
-      is_in_order: f_4,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("hub_call_client_group");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::List, 1))?;
-      o_prot.write_list_begin(&TListIdentifier::new(TType::String, fld_var.len() as i32))?;
-      for e in fld_var {
-        o_prot.write_string(e)?;
-      }
-      o_prot.write_list_end()?;
-      o_prot.write_field_end()?
-    }
-    if let Some(ref fld_var) = self.method {
-      o_prot.write_field_begin(&TFieldIdentifier::new("method", TType::String, 2))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(ref fld_var) = self.argvs {
-      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 3))?;
-      o_prot.write_bytes(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(fld_var) = self.is_in_order {
-      o_prot.write_field_begin(&TFieldIdentifier::new("is_in_order", TType::Bool, 4))?;
-      o_prot.write_bool(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// HubCallClientGlobal
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct HubCallClientGlobal {
-  pub method: Option<String>,
-  pub argvs: Option<Vec<u8>>,
-  pub is_in_order: Option<bool>,
-}
-
-impl HubCallClientGlobal {
-  pub fn new<F1, F2, F3>(method: F1, argvs: F2, is_in_order: F3) -> HubCallClientGlobal where F1: Into<Option<String>>, F2: Into<Option<Vec<u8>>>, F3: Into<Option<bool>> {
-    HubCallClientGlobal {
-      method: method.into(),
-      argvs: argvs.into(),
-      is_in_order: is_in_order.into(),
-    }
-  }
-}
-
-impl TSerializable for HubCallClientGlobal {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallClientGlobal> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = Some("".to_owned());
-    let mut f_2: Option<Vec<u8>> = Some(Vec::new());
-    let mut f_3: Option<bool> = Some(false);
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        2 => {
-          let val = i_prot.read_bytes()?;
-          f_2 = Some(val);
-        },
-        3 => {
-          let val = i_prot.read_bool()?;
-          f_3 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
     let ret = HubCallClientGlobal {
-      method: f_1,
-      argvs: f_2,
-      is_in_order: f_3,
+      message: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("hub_call_client_global");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.method {
-      o_prot.write_field_begin(&TFieldIdentifier::new("method", TType::String, 1))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(ref fld_var) = self.argvs {
-      o_prot.write_field_begin(&TFieldIdentifier::new("argvs", TType::String, 2))?;
-      o_prot.write_bytes(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    if let Some(fld_var) = self.is_in_order {
-      o_prot.write_field_begin(&TFieldIdentifier::new("is_in_order", TType::Bool, 3))?;
-      o_prot.write_bool(fld_var)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
     o_prot.write_field_stop()?;

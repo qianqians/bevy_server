@@ -19,6 +19,12 @@ struct delete_remote_entity {
 }
 
 /*
+ * gate ntf client reconnect server complete 
+ */
+struct reconnect_server_complete {
+}
+
+/*
  * gate forward hub msg kick_off client
  */
 struct kick_off {
@@ -29,7 +35,9 @@ struct kick_off {
  * gate forward hub call rpc to client.
  */
 struct call_rpc {
-	1:common.msg message
+	1:string entity_id,
+	2:i64 msg_cb_id,
+	3:common.msg message
 }
 
 /*
@@ -50,13 +58,15 @@ struct call_err {
  * gate forward hub send ntf msg to client.
  */
 struct call_ntf {
-	1:common.msg message
+	1:string entity_id,
+	2:common.msg message
 }
 
 /*
- * gate ntf client reconnect server complete 
+ * gate forward hub send global msg to client.
  */
-struct reconnect_server_complete {
+struct call_global {
+	1:common.msg message
 }
 
 union client_service {
@@ -67,5 +77,6 @@ union client_service {
 	5:call_rpc call_rpc,
 	6:call_rsp call_rsp,
 	7:call_err call_err,
-	8:call_ntf call_ntf
+	8:call_ntf call_ntf,
+	9:call_global call_global
 }
