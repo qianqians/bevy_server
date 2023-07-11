@@ -26,39 +26,46 @@ struct kick_off {
 }
 
 /*
- * hub call rpc to client.
+ * gate forward hub call rpc to client.
  */
 struct call_rpc {
 	1:common.msg message
 }
 
 /*
- * hub callback rsp to client.
+ * gate forward hub callback rsp to client.
  */
 struct call_rsp {
 	1:common.rpc_rsp rsp
 }
 
 /*
- * hub callback err to client.
+ * gate forward hub callback err to client.
  */
 struct call_err {
 	1:common.rpc_err err
 }
 
 /*
- * hub send ntf msg to client.
+ * gate forward hub send ntf msg to client.
  */
 struct call_ntf {
 	1:common.msg message
 }
 
+/*
+ * gate ntf client reconnect server complete 
+ */
+struct reconnect_server_complete {
+}
+
 union client_service {
 	1:create_remote_entity create_remote_entity,
 	2:delete_remote_entity delete_remote_entity,
-	3:kick_off kick_off,
-	4:call_rpc call_rpc,
-	5:call_rsp call_rsp,
-	6:call_err call_err,
-	7:call_ntf call_ntf
+	3:reconnect_server_complete reconnect_complete,
+	4:kick_off kick_off,
+	5:call_rpc call_rpc,
+	6:call_rsp call_rsp,
+	7:call_err call_err,
+	8:call_ntf call_ntf
 }

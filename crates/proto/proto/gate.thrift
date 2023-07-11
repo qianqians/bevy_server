@@ -82,6 +82,20 @@ struct hub_call_kick_off_client {
 	2:string prompt_info
 }
 
+/*
+ * hub request transfer client
+ */
+struct hub_call_transfer_client {
+	1:string conn_id
+}
+
+/*
+ * hub ntf transfer client complete
+ */
+struct hub_call_transfer_client_complete {
+	1:string conn_id
+}
+
 union gate_hub_service {
 	1:reg_hub reg_hub,
 	2:hub_call_client_create_remote_entity create_remote_entity,
@@ -92,7 +106,9 @@ union gate_hub_service {
 	7:hub_call_client_ntf call_ntf,
 	8:hub_call_client_group call_group,
 	9:hub_call_client_global call_global,
-	10:hub_call_kick_off_client kick_off
+	10:hub_call_kick_off_client kick_off,
+	11:hub_call_transfer_client transfer,
+	12:hub_call_transfer_client_complete transfer_complete
 }
 
 /*
@@ -122,9 +138,18 @@ struct client_call_hub_err {
 struct client_confirm_kick_off {
 }
 
+/*
+ * client reconnect
+ */
+struct client_reconnect_server {
+	1:string old_conn_id,
+	2:string new_conn_id
+}
+
 union gate_client_service {
 	1:client_call_hub_rpc call_rpc,
 	2:client_call_hub_rsp call_rsp,
 	3:client_call_hub_rsp call_err,
-	4:client_confirm_kick_off confirm_kick_off
+	4:client_confirm_kick_off confirm_kick_off,
+	5:client_reconnect_server reconnect_server
 }
