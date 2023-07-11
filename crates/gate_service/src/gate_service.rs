@@ -144,7 +144,7 @@ impl ConnManager {
         self.clients.get(conn_id)
     }
 
-    fn delete_client_proxy(&mut self, conn_id: &String) {
+    pub fn delete_client_proxy(&mut self, conn_id: &String) {
         let _ = self.clients.remove(conn_id);
     }
 

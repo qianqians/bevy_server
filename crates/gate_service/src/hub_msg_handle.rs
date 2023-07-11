@@ -130,8 +130,13 @@ impl GateHubMsgHandle {
                 let entity_type_tmp = entity_type.clone();
                 let argvs_tmp = argvs.clone();
                 let mut _client = _client_arc.as_ref().lock().unwrap();
-                _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(entity_id_tmp_main, entity_type_tmp, true, argvs_tmp)));
-                _entity.set_main_conn_id(Some(main_conn_id_tmp));
+                if !_client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(entity_id_tmp_main, entity_type_tmp, true, argvs_tmp))).await {
+                    let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                    _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
+                }
+                else {
+                    _entity.set_main_conn_id(Some(main_conn_id_tmp));
+                }
             }
         }
         if let Some(conn_dis) = ev.conn_id {
@@ -142,8 +147,13 @@ impl GateHubMsgHandle {
                     let entity_type_tmp = entity_type_other.clone();
                     let argvs_tmp = argvs_other.clone();
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    _client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(_entity_id_tmp, entity_type_tmp, false, argvs_tmp)));
-                    _entity.add_conn_id(id.to_string())
+                    if !_client.send_client_msg(ClientService::CreateRemoteEntity(CreateRemoteEntity::new(_entity_id_tmp, entity_type_tmp, false, argvs_tmp))).await {
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(id);
+                    }
+                    else {
+                        _entity.add_conn_id(id.to_string());
+                    }
                 }
             }
         }
@@ -164,7 +174,10 @@ impl GateHubMsgHandle {
                 let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
                 if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(&main_conn_id) {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    _client.send_client_msg(ClientService::DeleteRemoteEntity(DeleteRemoteEntity::new(entity_id_tmp_main)));
+                    if !_client.send_client_msg(ClientService::DeleteRemoteEntity(DeleteRemoteEntity::new(entity_id_tmp_main))).await {
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
+                    }
                 }
             }
             for id in _entity.get_conn_ids().iter() {
@@ -172,7 +185,10 @@ impl GateHubMsgHandle {
                 if let Some(_client_arc) = _conn_mgr_tmp.get_client_proxy(id) {
                     let _entity_id_tmp = entity_id_tmp_other.clone();
                     let mut _client = _client_arc.as_ref().lock().unwrap();
-                    _client.send_client_msg(ClientService::DeleteRemoteEntity(DeleteRemoteEntity::new(_entity_id_tmp)));
+                    if !_client.send_client_msg(ClientService::DeleteRemoteEntity(DeleteRemoteEntity::new(_entity_id_tmp))).await {
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(id);
+                    }
                 }
             }
         }
@@ -195,6 +211,8 @@ impl GateHubMsgHandle {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
                     if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(event_tmp_main))).await {
                         _entity.set_main_conn_id(None);
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
                     }
                 }
             }
@@ -218,6 +236,8 @@ impl GateHubMsgHandle {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
                     if !_client.send_client_msg(ClientService::CallRsp(CallRsp::new(event_tmp_main))).await {
                         _entity.set_main_conn_id(None);
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
                     }
                 }
             }
@@ -241,6 +261,8 @@ impl GateHubMsgHandle {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
                     if !_client.send_client_msg(ClientService::CallErr(CallErr::new(event_tmp_main))).await {
                         _entity.set_main_conn_id(None);
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
                     }
                 }
             }
@@ -266,6 +288,8 @@ impl GateHubMsgHandle {
                     let mut _client = _client_arc.as_ref().lock().unwrap();
                     if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(event_tmp_main))).await {
                         _entity.set_main_conn_id(None);
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(&main_conn_id);
                     }
                 }
             }
@@ -276,6 +300,8 @@ impl GateHubMsgHandle {
                     let _event_tmp_other = event_tmp_other.clone();
                     if !_client.send_client_msg(ClientService::CallNtf(CallNtf::new(_event_tmp_other))).await {
                         invalid_ids.push(id.to_string());
+                        let mut _conn_mgr_tmp = _conn_mgr_arc.as_ref().lock().unwrap();
+                        _conn_mgr_tmp.delete_client_proxy(id);
                     }
                 }
                 else {
