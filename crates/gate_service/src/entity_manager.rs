@@ -29,9 +29,19 @@ impl Entity {
         self.conn_ids.push(id)
     }
 
+    pub fn delete_conn_id(&mut self, conn_id: &String) {
+        for (index, item) in self.conn_ids.iter().enumerate() {
+            if *item == *conn_id {
+                self.conn_ids.remove(index);
+                break;
+            }
+        }
+    }
+
     pub fn get_conn_ids(&self) -> &Vec<String> {
         &self.conn_ids
     }
+
 }
 
 pub struct EntityManager {
