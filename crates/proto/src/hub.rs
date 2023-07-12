@@ -130,13 +130,13 @@ impl TSerializable for NtfClientRequestService {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct NtfTransferMsgEnd {
-  pub entity_id: Option<String>,
+  pub conn_id: Option<String>,
 }
 
 impl NtfTransferMsgEnd {
-  pub fn new<F1>(entity_id: F1) -> NtfTransferMsgEnd where F1: Into<Option<String>> {
+  pub fn new<F1>(conn_id: F1) -> NtfTransferMsgEnd where F1: Into<Option<String>> {
     NtfTransferMsgEnd {
-      entity_id: entity_id.into(),
+      conn_id: conn_id.into(),
     }
   }
 }
@@ -164,15 +164,72 @@ impl TSerializable for NtfTransferMsgEnd {
     }
     i_prot.read_struct_end()?;
     let ret = NtfTransferMsgEnd {
-      entity_id: f_1,
+      conn_id: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("ntf_transfer_msg_end");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.entity_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+    if let Some(ref fld_var) = self.conn_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// NtfClientDisconnnect
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct NtfClientDisconnnect {
+  pub conn_id: Option<String>,
+}
+
+impl NtfClientDisconnnect {
+  pub fn new<F1>(conn_id: F1) -> NtfClientDisconnnect where F1: Into<Option<String>> {
+    NtfClientDisconnnect {
+      conn_id: conn_id.into(),
+    }
+  }
+}
+
+impl TSerializable for NtfClientDisconnnect {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<NtfClientDisconnnect> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = NtfClientDisconnnect {
+      conn_id: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("ntf_client_disconnnect");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.conn_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 1))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
@@ -379,6 +436,133 @@ impl TSerializable for CallErr {
 }
 
 //
+// CallNtf
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallNtf {
+  pub entity_id: Option<String>,
+  pub message: Option<common::Msg>,
+}
+
+impl CallNtf {
+  pub fn new<F1, F2>(entity_id: F1, message: F2) -> CallNtf where F1: Into<Option<String>>, F2: Into<Option<common::Msg>> {
+    CallNtf {
+      entity_id: entity_id.into(),
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallNtf {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallNtf> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = i_prot.read_string()?;
+          f_1 = Some(val);
+        },
+        2 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_2 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallNtf {
+      entity_id: f_1,
+      message: f_2,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_ntf");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 2))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// CallGlobal
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct CallGlobal {
+  pub message: Option<common::Msg>,
+}
+
+impl CallGlobal {
+  pub fn new<F1>(message: F1) -> CallGlobal where F1: Into<Option<common::Msg>> {
+    CallGlobal {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for CallGlobal {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallGlobal> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = CallGlobal {
+      message: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("call_global");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // HubGateService
 //
 
@@ -386,9 +570,12 @@ impl TSerializable for CallErr {
 pub enum HubGateService {
   ClientRequestService(NtfClientRequestService),
   TransferMsgEnd(NtfTransferMsgEnd),
+  ClientDisconnnect(NtfClientDisconnnect),
   CallRpc(CallRpc),
   CallRsp(CallRsp),
   CallErr(CallErr),
+  CallNtf(CallNtf),
+  CallGlobal(CallGlobal),
 }
 
 impl TSerializable for HubGateService {
@@ -418,23 +605,44 @@ impl TSerializable for HubGateService {
           received_field_count += 1;
         },
         3 => {
+          let val = NtfClientDisconnnect::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::ClientDisconnnect(val));
+          }
+          received_field_count += 1;
+        },
+        4 => {
           let val = CallRpc::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(HubGateService::CallRpc(val));
           }
           received_field_count += 1;
         },
-        4 => {
+        5 => {
           let val = CallRsp::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(HubGateService::CallRsp(val));
           }
           received_field_count += 1;
         },
-        5 => {
+        6 => {
           let val = CallErr::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(HubGateService::CallErr(val));
+          }
+          received_field_count += 1;
+        },
+        7 => {
+          let val = CallNtf::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::CallNtf(val));
+          }
+          received_field_count += 1;
+        },
+        8 => {
+          let val = CallGlobal::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(HubGateService::CallGlobal(val));
           }
           received_field_count += 1;
         },
@@ -482,18 +690,33 @@ impl TSerializable for HubGateService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
+      HubGateService::ClientDisconnnect(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("client_disconnnect", TType::Struct, 3))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
       HubGateService::CallRpc(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 3))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rpc", TType::Struct, 4))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       HubGateService::CallRsp(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 4))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_rsp", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
       HubGateService::CallErr(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 5))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_err", TType::Struct, 6))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::CallNtf(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 7))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      HubGateService::CallGlobal(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 8))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

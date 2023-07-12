@@ -906,7 +906,7 @@ impl TSerializable for GateHubService {
           }
           received_field_count += 1;
         },
-        12 => {
+        11 => {
           let val = HubCallTransferClientComplete::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::TransferComplete(val));
@@ -998,7 +998,7 @@ impl TSerializable for GateHubService {
         o_prot.write_field_end()?;
       },
       GateHubService::TransferComplete(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("transfer_complete", TType::Struct, 12))?;
+        o_prot.write_field_begin(&TFieldIdentifier::new("transfer_complete", TType::Struct, 11))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
@@ -1014,12 +1014,16 @@ impl TSerializable for GateHubService {
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct ClientCallHubRpc {
+  pub entity_id: Option<String>,
+  pub msg_cb_id: Option<i64>,
   pub message: Option<common::Msg>,
 }
 
 impl ClientCallHubRpc {
-  pub fn new<F1>(message: F1) -> ClientCallHubRpc where F1: Into<Option<common::Msg>> {
+  pub fn new<F1, F2, F3>(entity_id: F1, msg_cb_id: F2, message: F3) -> ClientCallHubRpc where F1: Into<Option<String>>, F2: Into<Option<i64>>, F3: Into<Option<common::Msg>> {
     ClientCallHubRpc {
+      entity_id: entity_id.into(),
+      msg_cb_id: msg_cb_id.into(),
       message: message.into(),
     }
   }
@@ -1028,7 +1032,9 @@ impl ClientCallHubRpc {
 impl TSerializable for ClientCallHubRpc {
   fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallHubRpc> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
+    let mut f_1: Option<String> = Some("".to_owned());
+    let mut f_2: Option<i64> = Some(0);
+    let mut f_3: Option<common::Msg> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1037,8 +1043,16 @@ impl TSerializable for ClientCallHubRpc {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          let val = i_prot.read_string()?;
           f_1 = Some(val);
+        },
+        2 => {
+          let val = i_prot.read_i64()?;
+          f_2 = Some(val);
+        },
+        3 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_3 = Some(val);
         },
         _ => {
           i_prot.skip(field_ident.field_type)?;
@@ -1048,15 +1062,27 @@ impl TSerializable for ClientCallHubRpc {
     }
     i_prot.read_struct_end()?;
     let ret = ClientCallHubRpc {
-      message: f_1,
+      entity_id: f_1,
+      msg_cb_id: f_2,
+      message: f_3,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
     let struct_ident = TStructIdentifier::new("client_call_hub_rpc");
     o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
+      o_prot.write_string(fld_var)?;
+      o_prot.write_field_end()?
+    }
+    if let Some(fld_var) = self.msg_cb_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("msg_cb_id", TType::I64, 2))?;
+      o_prot.write_i64(fld_var)?;
+      o_prot.write_field_end()?
+    }
     if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 3))?;
       fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
@@ -1180,66 +1206,29 @@ impl TSerializable for ClientCallHubErr {
 }
 
 //
-// ClientConfirmKickOff
+// ClientCallHubNtf
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct ClientConfirmKickOff {
+pub struct ClientCallHubNtf {
+  pub entity_id: Option<String>,
+  pub message: Option<common::Msg>,
 }
 
-impl ClientConfirmKickOff {
-  pub fn new() -> ClientConfirmKickOff {
-    ClientConfirmKickOff {}
-  }
-}
-
-impl TSerializable for ClientConfirmKickOff {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientConfirmKickOff> {
-    i_prot.read_struct_begin()?;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      i_prot.skip(field_ident.field_type)?;
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = ClientConfirmKickOff {};
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("client_confirm_kick_off");
-    o_prot.write_struct_begin(&struct_ident)?;
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
-// ClientReconnectServer
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct ClientReconnectServer {
-  pub old_conn_id: Option<String>,
-  pub new_conn_id: Option<String>,
-}
-
-impl ClientReconnectServer {
-  pub fn new<F1, F2>(old_conn_id: F1, new_conn_id: F2) -> ClientReconnectServer where F1: Into<Option<String>>, F2: Into<Option<String>> {
-    ClientReconnectServer {
-      old_conn_id: old_conn_id.into(),
-      new_conn_id: new_conn_id.into(),
+impl ClientCallHubNtf {
+  pub fn new<F1, F2>(entity_id: F1, message: F2) -> ClientCallHubNtf where F1: Into<Option<String>>, F2: Into<Option<common::Msg>> {
+    ClientCallHubNtf {
+      entity_id: entity_id.into(),
+      message: message.into(),
     }
   }
 }
 
-impl TSerializable for ClientReconnectServer {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientReconnectServer> {
+impl TSerializable for ClientCallHubNtf {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallHubNtf> {
     i_prot.read_struct_begin()?;
     let mut f_1: Option<String> = Some("".to_owned());
-    let mut f_2: Option<String> = Some("".to_owned());
+    let mut f_2: Option<common::Msg> = None;
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1252,7 +1241,7 @@ impl TSerializable for ClientReconnectServer {
           f_1 = Some(val);
         },
         2 => {
-          let val = i_prot.read_string()?;
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
           f_2 = Some(val);
         },
         _ => {
@@ -1262,23 +1251,80 @@ impl TSerializable for ClientReconnectServer {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = ClientReconnectServer {
-      old_conn_id: f_1,
-      new_conn_id: f_2,
+    let ret = ClientCallHubNtf {
+      entity_id: f_1,
+      message: f_2,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("client_reconnect_server");
+    let struct_ident = TStructIdentifier::new("client_call_hub_ntf");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.old_conn_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("old_conn_id", TType::String, 1))?;
+    if let Some(ref fld_var) = self.entity_id {
+      o_prot.write_field_begin(&TFieldIdentifier::new("entity_id", TType::String, 1))?;
       o_prot.write_string(fld_var)?;
       o_prot.write_field_end()?
     }
-    if let Some(ref fld_var) = self.new_conn_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("new_conn_id", TType::String, 2))?;
-      o_prot.write_string(fld_var)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 2))?;
+      fld_var.write_to_out_protocol(o_prot)?;
+      o_prot.write_field_end()?
+    }
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
+// ClientCallHubGlobal
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct ClientCallHubGlobal {
+  pub message: Option<common::Msg>,
+}
+
+impl ClientCallHubGlobal {
+  pub fn new<F1>(message: F1) -> ClientCallHubGlobal where F1: Into<Option<common::Msg>> {
+    ClientCallHubGlobal {
+      message: message.into(),
+    }
+  }
+}
+
+impl TSerializable for ClientCallHubGlobal {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallHubGlobal> {
+    i_prot.read_struct_begin()?;
+    let mut f_1: Option<common::Msg> = None;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      let field_id = field_id(&field_ident)?;
+      match field_id {
+        1 => {
+          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          f_1 = Some(val);
+        },
+        _ => {
+          i_prot.skip(field_ident.field_type)?;
+        },
+      };
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = ClientCallHubGlobal {
+      message: f_1,
+    };
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("client_call_hub_global");
+    o_prot.write_struct_begin(&struct_ident)?;
+    if let Some(ref fld_var) = self.message {
+      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
+      fld_var.write_to_out_protocol(o_prot)?;
       o_prot.write_field_end()?
     }
     o_prot.write_field_stop()?;
@@ -1295,7 +1341,8 @@ pub enum GateClientService {
   CallRpc(ClientCallHubRpc),
   CallRsp(ClientCallHubRsp),
   CallErr(ClientCallHubRsp),
-  ConfirmKickOff(ClientConfirmKickOff),
+  CallNtf(ClientCallHubNtf),
+  CallGlobal(ClientCallHubGlobal),
 }
 
 impl TSerializable for GateClientService {
@@ -1332,9 +1379,16 @@ impl TSerializable for GateClientService {
           received_field_count += 1;
         },
         4 => {
-          let val = ClientConfirmKickOff::read_from_in_protocol(i_prot)?;
+          let val = ClientCallHubNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
-            ret = Some(GateClientService::ConfirmKickOff(val));
+            ret = Some(GateClientService::CallNtf(val));
+          }
+          received_field_count += 1;
+        },
+        5 => {
+          let val = ClientCallHubGlobal::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(GateClientService::CallGlobal(val));
           }
           received_field_count += 1;
         },
@@ -1387,8 +1441,13 @@ impl TSerializable for GateClientService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
-      GateClientService::ConfirmKickOff(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("confirm_kick_off", TType::Struct, 4))?;
+      GateClientService::CallNtf(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 4))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      GateClientService::CallGlobal(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

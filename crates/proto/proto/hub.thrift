@@ -11,10 +11,17 @@ struct ntf_client_request_service {
 }
 
 /*
- * gate notify entity exist server, old msg send complete.
+ * gate notify client exist server, old msg send complete.
  */
 struct ntf_transfer_msg_end {
-	1:string entity_id
+	1:string conn_id
+}
+
+/*
+ * gate notify client disconnnect
+ */
+struct ntf_client_disconnnect {
+	1:string conn_id
 }
 
 /*
@@ -40,12 +47,30 @@ struct call_err {
 	1:common.rpc_err err
 }
 
+/*
+ * client send ntf to hub.
+ */
+struct call_ntf {
+	1:string entity_id,
+	2:common.msg message
+}
+
+/*
+ * client send global msg to hub.
+ */
+struct call_global {
+	1:common.msg message
+}
+
 union hub_gate_service {
 	1:ntf_client_request_service client_request_service,
 	2:ntf_transfer_msg_end transfer_msg_end,
-	3:call_rpc call_rpc,
-	4:call_rsp call_rsp,
-	5:call_err call_err
+	3:ntf_client_disconnnect client_disconnnect,
+	4:call_rpc call_rpc,
+	5:call_rsp call_rsp,
+	6:call_err call_err,
+	7:call_ntf call_ntf,
+	8:call_global call_global
 }
 
 struct ack_get_guid {

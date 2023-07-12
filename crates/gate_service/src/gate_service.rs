@@ -59,7 +59,7 @@ impl HubProxy {
 
     pub fn get_msg_handle(&mut self) -> Arc<Mutex<GateHubMsgHandle>> {
         let _conn_mgr = self.conn_mgr.as_ref().lock().unwrap();
-        _conn_mgr.handle.clone()
+        _conn_mgr.hub_msg_handle.clone()
     }
 
     pub fn get_conn_mgr(&mut self) -> Arc<Mutex<ConnManager>> {
@@ -118,7 +118,7 @@ pub struct ConnManager {
     clients: BTreeMap<String, Arc<Mutex<ClientProxy>>>,
     entities: EntityManager,
     delay_hub_msg: Queue<DelayHubMsg>,
-    handle: Arc<Mutex<GateHubMsgHandle>>
+    hub_msg_handle: Arc<Mutex<GateHubMsgHandle>>
 }
 
 impl ConnManager {
@@ -128,7 +128,7 @@ impl ConnManager {
             clients: BTreeMap::new(),
             entities: EntityManager::new(),
             delay_hub_msg: Queue::new(),
-            handle: _handle
+            hub_msg_handle: _handle
         }
     }
 

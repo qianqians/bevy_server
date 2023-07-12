@@ -106,7 +106,9 @@ union gate_hub_service {
  * client send rpc msg to hub.
  */
 struct client_call_hub_rpc {
-	1:common.msg message
+	1:string entity_id,
+	2:i64 msg_cb_id,
+	3:common.msg message
 }
 
 /*
@@ -124,22 +126,24 @@ struct client_call_hub_err {
 }
 
 /*
- * client confirm kick off
+ * client send ntf to hub.
  */
-struct client_confirm_kick_off {
+struct client_call_hub_ntf {
+	1:string entity_id,
+	2:common.msg message
 }
 
 /*
- * client reconnect
+ * client send global msg to hub.
  */
-struct client_reconnect_server {
-	1:string old_conn_id,
-	2:string new_conn_id
+struct client_call_hub_global {
+	1:common.msg message
 }
 
 union gate_client_service {
 	1:client_call_hub_rpc call_rpc,
 	2:client_call_hub_rsp call_rsp,
 	3:client_call_hub_rsp call_err,
-	4:client_confirm_kick_off confirm_kick_off
+	4:client_call_hub_ntf call_ntf,
+	5:client_call_hub_global call_global,
 }

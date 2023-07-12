@@ -94,6 +94,30 @@ impl GateHubMsgHandle {
         })
     }
 
+    pub async fn poll(&mut self) {
+        loop {
+            let opt_ev_data = self.queue.deque();
+            let mut_ev_data = match opt_ev_data {
+                None => break,
+                Some(ev_data) => ev_data
+            };
+            let proxy = mut_ev_data.proxy.clone();
+            match mut_ev_data.ev {
+                GateHubService::RegHub(ev) => GateHubMsgHandle::do_reg_hub(proxy, ev).await,
+                GateHubService::CreateRemoteEntity(ev) => GateHubMsgHandle::do_create_remote_entity(proxy, ev).await,
+                GateHubService::DeleteRemoteEntity(ev) => GateHubMsgHandle::do_delete_remote_entity(proxy, ev).await,
+                GateHubService::CallRpc(ev) => GateHubMsgHandle::do_call_client_rpc(proxy, ev).await,
+                GateHubService::CallRsp(ev) => GateHubMsgHandle::do_call_client_rsp(proxy, ev).await,
+                GateHubService::CallErr(ev) => GateHubMsgHandle::do_call_client_err(proxy, ev).await,
+                GateHubService::CallNtf(ev) => GateHubMsgHandle::do_call_client_ntf(proxy, ev).await,
+                GateHubService::CallGroup(ev) => GateHubMsgHandle::do_call_client_group(proxy, ev).await,
+                GateHubService::CallGlobal(ev) => GateHubMsgHandle::do_call_client_global(proxy, ev).await,
+                GateHubService::KickOff(ev) => GateHubMsgHandle::do_kick_off_client(proxy, ev).await,
+                GateHubService::TransferComplete(ev) => GateHubMsgHandle::do_transfer_client_complete(proxy, ev).await,
+            }
+        }
+    }
+
     pub async fn do_reg_hub(_proxy: Arc<Mutex<HubProxy>>, ev: RegHub) {
         trace!("do_hub_event reg_hu begin!");
 
@@ -384,4 +408,31 @@ impl GateHubMsgHandle {
             }
         }
     }
+
+    pub async fn do_kick_off_client(_proxy: Arc<Mutex<HubProxy>>, ev: HubCallKickOffClient) {
+        trace!("do_hub_event kick_off_client begin!");
+
+        let _proxy_clone = _proxy.clone();
+        let mut _p = _proxy.as_ref().lock().unwrap();
+        let _conn_mgr_arc = _p.get_conn_mgr();
+        let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
+
+        let conn_id = ev.conn_id.unwrap();
+        _conn_mgr.close_client(&conn_id).await;
+        _conn_mgr.add_delay_hub_msg(DelayHubMsg::new(_proxy_clone, HubGateService::TransferMsgEnd(NtfTransferMsgEnd::new(conn_id))));
+    }
+    
+    pub async fn do_transfer_client_complete(_proxy: Arc<Mutex<HubProxy>>, ev: HubCallTransferClientComplete) {
+        trace!("do_hub_event transfer_client_complete begin!");
+
+        let mut _p = _proxy.as_ref().lock().unwrap();
+        let _conn_mgr_arc = _p.get_conn_mgr();
+        let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
+
+        if let Some(_client_arc) = _conn_mgr.get_client_proxy(&ev.conn_id.unwrap()) {
+            let mut _client = _client_arc.as_ref().lock().unwrap();
+            _client.send_client_msg(ClientService::TransferComplete(TransferComplete::new()));
+        }
+    }
+    
 }
