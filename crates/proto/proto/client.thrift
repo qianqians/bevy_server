@@ -21,7 +21,7 @@ struct delete_remote_entity {
 /*
  * gate ntf client reconnect server complete 
  */
-struct reconnect_server_complete {
+struct transfer_complete {
 }
 
 /*
@@ -72,8 +72,8 @@ struct call_global {
 union client_service {
 	1:create_remote_entity create_remote_entity,
 	2:delete_remote_entity delete_remote_entity,
-	3:reconnect_server_complete reconnect_complete,
-	4:kick_off kick_off,
+	3:kick_off kick_off,
+	4:transfer_complete transfer_complete,
 	5:call_rpc call_rpc,
 	6:call_rsp call_rsp,
 	7:call_err call_err,

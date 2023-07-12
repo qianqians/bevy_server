@@ -749,63 +749,6 @@ impl TSerializable for HubCallKickOffClient {
 }
 
 //
-// HubCallTransferClient
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct HubCallTransferClient {
-  pub conn_id: Option<String>,
-}
-
-impl HubCallTransferClient {
-  pub fn new<F1>(conn_id: F1) -> HubCallTransferClient where F1: Into<Option<String>> {
-    HubCallTransferClient {
-      conn_id: conn_id.into(),
-    }
-  }
-}
-
-impl TSerializable for HubCallTransferClient {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<HubCallTransferClient> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<String> = Some("".to_owned());
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = i_prot.read_string()?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = HubCallTransferClient {
-      conn_id: f_1,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("hub_call_transfer_client");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.conn_id {
-      o_prot.write_field_begin(&TFieldIdentifier::new("conn_id", TType::String, 1))?;
-      o_prot.write_string(fld_var)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
 // HubCallTransferClientComplete
 //
 
@@ -878,7 +821,6 @@ pub enum GateHubService {
   CallGroup(HubCallClientGroup),
   CallGlobal(HubCallClientGlobal),
   KickOff(HubCallKickOffClient),
-  Transfer(HubCallTransferClient),
   TransferComplete(HubCallTransferClientComplete),
 }
 
@@ -961,13 +903,6 @@ impl TSerializable for GateHubService {
           let val = HubCallKickOffClient::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateHubService::KickOff(val));
-          }
-          received_field_count += 1;
-        },
-        11 => {
-          let val = HubCallTransferClient::read_from_in_protocol(i_prot)?;
-          if ret.is_none() {
-            ret = Some(GateHubService::Transfer(val));
           }
           received_field_count += 1;
         },
@@ -1059,11 +994,6 @@ impl TSerializable for GateHubService {
       },
       GateHubService::KickOff(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("kick_off", TType::Struct, 10))?;
-        f.write_to_out_protocol(o_prot)?;
-        o_prot.write_field_end()?;
-      },
-      GateHubService::Transfer(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("transfer", TType::Struct, 11))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
@@ -1366,7 +1296,6 @@ pub enum GateClientService {
   CallRsp(ClientCallHubRsp),
   CallErr(ClientCallHubRsp),
   ConfirmKickOff(ClientConfirmKickOff),
-  ReconnectServer(ClientReconnectServer),
 }
 
 impl TSerializable for GateClientService {
@@ -1406,13 +1335,6 @@ impl TSerializable for GateClientService {
           let val = ClientConfirmKickOff::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(GateClientService::ConfirmKickOff(val));
-          }
-          received_field_count += 1;
-        },
-        5 => {
-          let val = ClientReconnectServer::read_from_in_protocol(i_prot)?;
-          if ret.is_none() {
-            ret = Some(GateClientService::ReconnectServer(val));
           }
           received_field_count += 1;
         },
@@ -1467,11 +1389,6 @@ impl TSerializable for GateClientService {
       },
       GateClientService::ConfirmKickOff(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("confirm_kick_off", TType::Struct, 4))?;
-        f.write_to_out_protocol(o_prot)?;
-        o_prot.write_field_end()?;
-      },
-      GateClientService::ReconnectServer(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("reconnect_server", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

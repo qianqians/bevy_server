@@ -17,7 +17,6 @@ use proto::gate::{
     HubCallClientGroup, 
     HubCallClientGlobal,
     HubCallKickOffClient,
-    HubCallTransferClient,
     HubCallTransferClientComplete
 };
 
@@ -25,7 +24,7 @@ use proto::client::{
     ClientService,
     CreateRemoteEntity,
     DeleteRemoteEntity,
-    ReconnectServerComplete,
+    TransferComplete,
     KickOff,
     CallRpc,
     CallRsp,
