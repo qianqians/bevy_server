@@ -600,6 +600,43 @@ impl TSerializable for CallGlobal {
 }
 
 //
+// GateCallHeartbeats
+//
+
+#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct GateCallHeartbeats {
+}
+
+impl GateCallHeartbeats {
+  pub fn new() -> GateCallHeartbeats {
+    GateCallHeartbeats {}
+  }
+}
+
+impl TSerializable for GateCallHeartbeats {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<GateCallHeartbeats> {
+    i_prot.read_struct_begin()?;
+    loop {
+      let field_ident = i_prot.read_field_begin()?;
+      if field_ident.field_type == TType::Stop {
+        break;
+      }
+      i_prot.skip(field_ident.field_type)?;
+      i_prot.read_field_end()?;
+    }
+    i_prot.read_struct_end()?;
+    let ret = GateCallHeartbeats {};
+    Ok(ret)
+  }
+  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
+    let struct_ident = TStructIdentifier::new("gate_call_heartbeats");
+    o_prot.write_struct_begin(&struct_ident)?;
+    o_prot.write_field_stop()?;
+    o_prot.write_struct_end()
+  }
+}
+
+//
 // ClientService
 //
 
@@ -614,6 +651,7 @@ pub enum ClientService {
   CallErr(CallErr),
   CallNtf(CallNtf),
   CallGlobal(CallGlobal),
+  Heartbeats(GateCallHeartbeats),
 }
 
 impl TSerializable for ClientService {
@@ -688,6 +726,13 @@ impl TSerializable for ClientService {
           let val = CallGlobal::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(ClientService::CallGlobal(val));
+          }
+          received_field_count += 1;
+        },
+        10 => {
+          let val = GateCallHeartbeats::read_from_in_protocol(i_prot)?;
+          if ret.is_none() {
+            ret = Some(ClientService::Heartbeats(val));
           }
           received_field_count += 1;
         },
@@ -767,6 +812,11 @@ impl TSerializable for ClientService {
       },
       ClientService::CallGlobal(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 9))?;
+        f.write_to_out_protocol(o_prot)?;
+        o_prot.write_field_end()?;
+      },
+      ClientService::Heartbeats(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("heartbeats", TType::Struct, 10))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

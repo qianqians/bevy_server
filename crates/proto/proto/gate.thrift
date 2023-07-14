@@ -134,10 +134,10 @@ struct client_call_hub_ntf {
 }
 
 /*
- * client send global msg to hub.
+ * client heartbeats
  */
-struct client_call_hub_global {
-	1:common.msg message
+struct client_call_gate_heartbeats {
+	1:i64 timetmp
 }
 
 union gate_client_service {
@@ -145,5 +145,5 @@ union gate_client_service {
 	2:client_call_hub_rsp call_rsp,
 	3:client_call_hub_rsp call_err,
 	4:client_call_hub_ntf call_ntf,
-	5:client_call_hub_global call_global,
+	5:client_call_gate_heartbeats heartbeats
 }

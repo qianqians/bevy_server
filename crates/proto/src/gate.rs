@@ -1276,26 +1276,26 @@ impl TSerializable for ClientCallHubNtf {
 }
 
 //
-// ClientCallHubGlobal
+// ClientCallGateHeartbeats
 //
 
 #[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct ClientCallHubGlobal {
-  pub message: Option<common::Msg>,
+pub struct ClientCallGateHeartbeats {
+  pub timetmp: Option<i64>,
 }
 
-impl ClientCallHubGlobal {
-  pub fn new<F1>(message: F1) -> ClientCallHubGlobal where F1: Into<Option<common::Msg>> {
-    ClientCallHubGlobal {
-      message: message.into(),
+impl ClientCallGateHeartbeats {
+  pub fn new<F1>(timetmp: F1) -> ClientCallGateHeartbeats where F1: Into<Option<i64>> {
+    ClientCallGateHeartbeats {
+      timetmp: timetmp.into(),
     }
   }
 }
 
-impl TSerializable for ClientCallHubGlobal {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallHubGlobal> {
+impl TSerializable for ClientCallGateHeartbeats {
+  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<ClientCallGateHeartbeats> {
     i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
+    let mut f_1: Option<i64> = Some(0);
     loop {
       let field_ident = i_prot.read_field_begin()?;
       if field_ident.field_type == TType::Stop {
@@ -1304,7 +1304,7 @@ impl TSerializable for ClientCallHubGlobal {
       let field_id = field_id(&field_ident)?;
       match field_id {
         1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
+          let val = i_prot.read_i64()?;
           f_1 = Some(val);
         },
         _ => {
@@ -1314,17 +1314,17 @@ impl TSerializable for ClientCallHubGlobal {
       i_prot.read_field_end()?;
     }
     i_prot.read_struct_end()?;
-    let ret = ClientCallHubGlobal {
-      message: f_1,
+    let ret = ClientCallGateHeartbeats {
+      timetmp: f_1,
     };
     Ok(ret)
   }
   fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("client_call_hub_global");
+    let struct_ident = TStructIdentifier::new("client_call_gate_heartbeats");
     o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
-      fld_var.write_to_out_protocol(o_prot)?;
+    if let Some(fld_var) = self.timetmp {
+      o_prot.write_field_begin(&TFieldIdentifier::new("timetmp", TType::I64, 1))?;
+      o_prot.write_i64(fld_var)?;
       o_prot.write_field_end()?
     }
     o_prot.write_field_stop()?;
@@ -1342,7 +1342,7 @@ pub enum GateClientService {
   CallRsp(ClientCallHubRsp),
   CallErr(ClientCallHubRsp),
   CallNtf(ClientCallHubNtf),
-  CallGlobal(ClientCallHubGlobal),
+  Heartbeats(ClientCallGateHeartbeats),
 }
 
 impl TSerializable for GateClientService {
@@ -1386,9 +1386,9 @@ impl TSerializable for GateClientService {
           received_field_count += 1;
         },
         5 => {
-          let val = ClientCallHubGlobal::read_from_in_protocol(i_prot)?;
+          let val = ClientCallGateHeartbeats::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
-            ret = Some(GateClientService::CallGlobal(val));
+            ret = Some(GateClientService::Heartbeats(val));
           }
           received_field_count += 1;
         },
@@ -1446,8 +1446,8 @@ impl TSerializable for GateClientService {
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },
-      GateClientService::CallGlobal(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 5))?;
+      GateClientService::Heartbeats(ref f) => {
+        o_prot.write_field_begin(&TFieldIdentifier::new("heartbeats", TType::Struct, 5))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

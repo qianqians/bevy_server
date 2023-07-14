@@ -42,6 +42,10 @@ impl Entity {
         &self.conn_ids
     }
 
+    pub fn get_hub_name(&self) -> &String {
+        &self.hub_name
+    }
+
 }
 
 pub struct EntityManager {

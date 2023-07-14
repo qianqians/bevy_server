@@ -506,63 +506,6 @@ impl TSerializable for CallNtf {
 }
 
 //
-// CallGlobal
-//
-
-#[derive(Clone, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct CallGlobal {
-  pub message: Option<common::Msg>,
-}
-
-impl CallGlobal {
-  pub fn new<F1>(message: F1) -> CallGlobal where F1: Into<Option<common::Msg>> {
-    CallGlobal {
-      message: message.into(),
-    }
-  }
-}
-
-impl TSerializable for CallGlobal {
-  fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<CallGlobal> {
-    i_prot.read_struct_begin()?;
-    let mut f_1: Option<common::Msg> = None;
-    loop {
-      let field_ident = i_prot.read_field_begin()?;
-      if field_ident.field_type == TType::Stop {
-        break;
-      }
-      let field_id = field_id(&field_ident)?;
-      match field_id {
-        1 => {
-          let val = common::Msg::read_from_in_protocol(i_prot)?;
-          f_1 = Some(val);
-        },
-        _ => {
-          i_prot.skip(field_ident.field_type)?;
-        },
-      };
-      i_prot.read_field_end()?;
-    }
-    i_prot.read_struct_end()?;
-    let ret = CallGlobal {
-      message: f_1,
-    };
-    Ok(ret)
-  }
-  fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {
-    let struct_ident = TStructIdentifier::new("call_global");
-    o_prot.write_struct_begin(&struct_ident)?;
-    if let Some(ref fld_var) = self.message {
-      o_prot.write_field_begin(&TFieldIdentifier::new("message", TType::Struct, 1))?;
-      fld_var.write_to_out_protocol(o_prot)?;
-      o_prot.write_field_end()?
-    }
-    o_prot.write_field_stop()?;
-    o_prot.write_struct_end()
-  }
-}
-
-//
 // HubGateService
 //
 
@@ -575,7 +518,6 @@ pub enum HubGateService {
   CallRsp(CallRsp),
   CallErr(CallErr),
   CallNtf(CallNtf),
-  CallGlobal(CallGlobal),
 }
 
 impl TSerializable for HubGateService {
@@ -636,13 +578,6 @@ impl TSerializable for HubGateService {
           let val = CallNtf::read_from_in_protocol(i_prot)?;
           if ret.is_none() {
             ret = Some(HubGateService::CallNtf(val));
-          }
-          received_field_count += 1;
-        },
-        8 => {
-          let val = CallGlobal::read_from_in_protocol(i_prot)?;
-          if ret.is_none() {
-            ret = Some(HubGateService::CallGlobal(val));
           }
           received_field_count += 1;
         },
@@ -712,11 +647,6 @@ impl TSerializable for HubGateService {
       },
       HubGateService::CallNtf(ref f) => {
         o_prot.write_field_begin(&TFieldIdentifier::new("call_ntf", TType::Struct, 7))?;
-        f.write_to_out_protocol(o_prot)?;
-        o_prot.write_field_end()?;
-      },
-      HubGateService::CallGlobal(ref f) => {
-        o_prot.write_field_begin(&TFieldIdentifier::new("call_global", TType::Struct, 8))?;
         f.write_to_out_protocol(o_prot)?;
         o_prot.write_field_end()?;
       },

@@ -69,6 +69,12 @@ struct call_global {
 	1:common.msg message
 }
 
+/*
+ * gate call heartbeats
+ */
+struct gate_call_heartbeats {
+}
+
 union client_service {
 	1:create_remote_entity create_remote_entity,
 	2:delete_remote_entity delete_remote_entity,
@@ -78,5 +84,6 @@ union client_service {
 	6:call_rsp call_rsp,
 	7:call_err call_err,
 	8:call_ntf call_ntf,
-	9:call_global call_global
+	9:call_global call_global,
+	10:gate_call_heartbeats heartbeats
 }

@@ -21,7 +21,8 @@ use proto::client::{
     ClientService,
 };
 
-use crate::hub_msg_handle::{HubEvent, GateHubMsgHandle};
+use crate::hub_msg_handle::{GateHubMsgHandle};
+use crate::client_msg_handle::{GateClientMsgHandle};
 use crate::entity_manager::{Entity, EntityManager};
 
 pub struct HubProxy {
@@ -65,6 +66,21 @@ impl HubProxy {
     pub fn get_conn_mgr(&mut self) -> Arc<Mutex<ConnManager>> {
         self.conn_mgr.clone()
     }
+
+    pub async fn send_hub_msg(&mut self, msg: HubGateService) -> bool {
+        let t = TBufferChannel::with_capacity(0, 1024);
+        let (rd, wr) = match t.split() {
+            Ok(_t) => (_t.0, _t.1),
+            Err(_e) => {
+                error!("do_get_guid t.split error {}", _e);
+                return false;
+            }
+        };
+        let mut o_prot = TCompactOutputProtocol::new(wr);
+        let _ = HubGateService::write_to_out_protocol(&msg, &mut o_prot);
+        let mut p_send = self.wr.as_ref().lock().unwrap();
+        p_send.send(&rd.write_bytes()).await
+    }
 }
 
 pub struct DelayHubMsg {
@@ -89,12 +105,21 @@ pub struct ClientProxy {
 }
 
 impl ClientProxy {
-    pub fn get_conn_id(&self) -> String {
-        self.conn_id.clone()
+    pub fn get_conn_id(&self) -> &String {
+        &self.conn_id
     }
 
     pub fn get_writer(&mut self) -> Arc<Mutex<Box<dyn NetWriter + Send + Sync + 'static>>> {
         self.wr.clone()
+    }
+
+    pub fn get_msg_handle(&mut self) -> Arc<Mutex<GateClientMsgHandle>> {
+        let _conn_mgr = self.conn_mgr.as_ref().lock().unwrap();
+        _conn_mgr.client_msg_handle.clone()
+    }
+
+    pub fn get_conn_mgr(&mut self) -> Arc<Mutex<ConnManager>> {
+        self.conn_mgr.clone()
     }
 
     pub async fn send_client_msg(&mut self, msg: ClientService) -> bool {
@@ -118,17 +143,19 @@ pub struct ConnManager {
     clients: BTreeMap<String, Arc<Mutex<ClientProxy>>>,
     entities: EntityManager,
     delay_hub_msg: Queue<DelayHubMsg>,
-    hub_msg_handle: Arc<Mutex<GateHubMsgHandle>>
+    hub_msg_handle: Arc<Mutex<GateHubMsgHandle>>,
+    client_msg_handle: Arc<Mutex<GateClientMsgHandle>>
 }
 
 impl ConnManager {
-    pub fn new(_handle: Arc<Mutex<GateHubMsgHandle>>) -> ConnManager {
+    pub fn new(_hub_handle: Arc<Mutex<GateHubMsgHandle>>, _client_handle: Arc<Mutex<GateClientMsgHandle>>) -> ConnManager {
         ConnManager {
             hubs: BTreeMap::new(),
             clients: BTreeMap::new(),
             entities: EntityManager::new(),
             delay_hub_msg: Queue::new(),
-            hub_msg_handle: _handle
+            hub_msg_handle: _hub_handle,
+            client_msg_handle: _client_handle
         }
     }
 
@@ -157,6 +184,14 @@ impl ConnManager {
         _client_clone.into_values().collect()
     }
 
+    pub fn get_hub_proxy(&mut self, name: &String) -> Option<&Arc<Mutex<HubProxy>>> {
+        self.hubs.get(name)
+    }
+
+    pub fn delete_hub_proxy(&mut self, name: &String) {
+        let _ = self.hubs.remove(name);
+    }
+
     pub async fn close_client(&mut self, conn_id: &String) {
         if let Some(client) = self.clients.remove(conn_id) {
             let _c = client.as_ref().lock().unwrap();
@@ -177,8 +212,9 @@ pub struct GateService {
 
 impl GateService {
     pub async fn new(hub_host:String, client_tcp_host:String, client_wss_host:String, c: Arc<Mutex<CloseHandle>>) -> Result<GateService, Box<dyn std::error::Error>> {
-        let _msg_handle = GateHubMsgHandle::new()?;
-        let _conn_mgr = Arc::new(Mutex::new(ConnManager::new(_msg_handle)));
+        let _hub_handle = GateHubMsgHandle::new();
+        let _client_handle = GateClientMsgHandle::new();
+        let _conn_mgr = Arc::new(Mutex::new(ConnManager::new(_hub_handle, _client_handle)));
         let _tcp_s = TcpServer::listen(hub_host, GateService::do_accept_hub, _conn_mgr, c).await?;
         Ok(GateService {
             server: _tcp_s

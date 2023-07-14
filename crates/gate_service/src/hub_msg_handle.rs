@@ -63,11 +63,10 @@ fn deserialize(data: Vec<u8>) -> Result<GateHubService, Box<dyn std::error::Erro
 }
 
 impl GateHubMsgHandle {
-    pub fn new() -> Result<Arc<Mutex<GateHubMsgHandle>>, Box<dyn std::error::Error>> {
-        let mut _hub_server = Arc::new(Mutex::new(GateHubMsgHandle {
+    pub fn new() -> Arc<Mutex<GateHubMsgHandle>> {
+        Arc::new(Mutex::new(GateHubMsgHandle {
             queue: Queue::new(), 
-        }));
-        Ok(_hub_server)
+        }))
     }
 
     pub fn enque_event(&mut self, ev: HubEvent) {
@@ -81,7 +80,7 @@ impl GateHubMsgHandle {
         let mut _p = _proxy.as_ref().lock().unwrap();
         let _ev = match deserialize(data) {
             Err(e) => {
-                error!("DBProxyThriftServer do_event err:{}", e);
+                error!("GateHubMsgHandle do_event err:{}", e);
                 return;
             }
             Ok(d) => d
@@ -418,6 +417,10 @@ impl GateHubMsgHandle {
         let mut _conn_mgr = _conn_mgr_arc.as_ref().lock().unwrap();
 
         let conn_id = ev.conn_id.unwrap();
+        if let Some(_client_arc) = _conn_mgr.get_client_proxy(&conn_id) {
+            let mut _client = _client_arc.as_ref().lock().unwrap();
+            let _ = _client.send_client_msg(ClientService::KickOff(KickOff::new(ev.prompt_info.unwrap()))).await;
+        }
         _conn_mgr.close_client(&conn_id).await;
         _conn_mgr.add_delay_hub_msg(DelayHubMsg::new(_proxy_clone, HubGateService::TransferMsgEnd(NtfTransferMsgEnd::new(conn_id))));
     }

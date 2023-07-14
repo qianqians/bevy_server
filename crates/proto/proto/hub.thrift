@@ -55,13 +55,6 @@ struct call_ntf {
 	2:common.msg message
 }
 
-/*
- * client send global msg to hub.
- */
-struct call_global {
-	1:common.msg message
-}
-
 union hub_gate_service {
 	1:ntf_client_request_service client_request_service,
 	2:ntf_transfer_msg_end transfer_msg_end,
@@ -69,8 +62,7 @@ union hub_gate_service {
 	4:call_rpc call_rpc,
 	5:call_rsp call_rsp,
 	6:call_err call_err,
-	7:call_ntf call_ntf,
-	8:call_global call_global
+	7:call_ntf call_ntf
 }
 
 struct ack_get_guid {
